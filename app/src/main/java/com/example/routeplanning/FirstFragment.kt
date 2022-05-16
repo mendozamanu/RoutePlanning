@@ -1,17 +1,15 @@
 package com.example.routeplanning
 
 import android.os.Bundle
-import android.text.Editable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.example.routeplanning.databinding.FragmentFirstBinding
 import io.realm.Realm
@@ -19,9 +17,9 @@ import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import io.realm.mongodb.App
 import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
 import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
-import io.realm.mongodb.Credentials
 import org.bson.types.ObjectId
 
 open class Routes(
@@ -48,7 +46,6 @@ private var submitted = 0
 class FirstFragment : Fragment() {
 
     private var _binding: FragmentFirstBinding? = null
-    private var sharedViewModelInstance: SharedViewModel? = null
     private var editOriginAdr: EditText? = null
     private var editDestAdr: EditText? = null
 
@@ -59,7 +56,7 @@ class FirstFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         val view: View = inflater.inflate(R.layout.fragment_first, container, false)
 
@@ -69,15 +66,24 @@ class FirstFragment : Fragment() {
         val originButton: Button = view.findViewById(R.id.button_first_o)
         val destButton: Button = view.findViewById(R.id.button_first_d)
 
+        setFragmentResultListener("directionsRequested"){
+            key, bundle ->
+            val result2 = bundle.getStringArrayList("bundleKey") as ArrayList<String>
+            editOriginAdr!!.setText(result2[0])
+            editDestAdr!!.setText(result2[1])
+        }
+
         originButton.setOnClickListener {
-            sharedViewModelInstance?.setData(editOriginAdr!!.text)
-            Toast.makeText(context, sharedViewModelInstance?.getData().toString(), Toast.LENGTH_SHORT).show()
+            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString())
+            setFragmentResult("requestedAddrO", bundleOf("bundledKey" to result))
+            Log.d("List", result.toString())
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
 
         destButton.setOnClickListener {
-            sharedViewModelInstance?.setData(editDestAdr!!.text)
-            Toast.makeText(context, sharedViewModelInstance?.getData().toString(), Toast.LENGTH_SHORT).show()
+            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString())
+            setFragmentResult("requestedAddrD", bundleOf("bundledKey" to result))
+
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
         loginToMongo()
@@ -137,12 +143,6 @@ class FirstFragment : Fragment() {
 
          val sendButton: Button = view.findViewById(R.id.sendButton)
 
-         sharedViewModelInstance = ViewModelProvider(this).get(SharedViewModel::class.java)
-         sharedViewModelInstance!!.getData().observe(viewLifecycleOwner) {
-             editOriginAdr!!.text = it as Editable?
-             //binding.destAddr.text = it as Editable?
-         }
-
 
          sendButton.setOnClickListener {
             //MongoDB connect and send data
@@ -156,9 +156,9 @@ class FirstFragment : Fragment() {
                 return@setOnClickListener
             }
             //Before: data validation
-            //var data: Routes?
+            var data: Routes?
 
-            /*val org = binding.editTextTime.text.toString()
+            val org = view.findViewById<TextView>(R.id.editTextTime).text.toString()
             val values: List<String> = org.split(":")
             if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
                 Log.d("Debug1", "DEPART at: $org")
@@ -170,7 +170,7 @@ class FirstFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val dest = binding.editTextTime2.text.toString()
+            val dest = view.findViewById<TextView>(R.id.editTextTime2).text.toString()
             val values2: List<String> = dest.split(":")
             if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
                 Log.d("Debug1", "ARRIVE at: $dest")
@@ -189,26 +189,26 @@ class FirstFragment : Fragment() {
                 submitted = 1
                 syncedRealm?.executeTransaction { transact: Realm ->
                     data = transact.createObject(Routes::class.java, ObjectId())
-                    data?.origin = binding.originAddr.text.toString()
-                    data?.destination = binding.destAddr.text.toString()
-                    data?.depart = binding.editTextTime.text.toString()
-                    data?.arrival = binding.editTextTime2.text.toString()
-                    if (binding.checkBox.isChecked) {
+                    data?.origin = editOriginAdr?.text.toString()
+                    data?.destination = editDestAdr?.text.toString()
+                    data?.depart = org
+                    data?.arrival = dest
+                    if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
                         data?.publictransport = true
                     }
-                    if (binding.checkBox2.isChecked) {
+                    if (view.findViewById<CheckBox>(R.id.checkBox2).isChecked) {
                         data?.car = true
                     }
-                    if (binding.checkBox3.isChecked) {
+                    if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
                         data?.walk = true
                     }
-                    data?.comment = binding.comments.text.toString()
+                    data?.comment = view.findViewById<EditText>(R.id.comments).text.toString()
                 }
 
             } else {
                 Log.d("REALM error", "realm closed or wrong ref")
                 return@setOnClickListener
-            }*/
+            }
         }
     }
 

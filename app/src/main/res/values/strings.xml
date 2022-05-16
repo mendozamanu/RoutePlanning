@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">RoutePlanning</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">Daily Route Form</string>
+    <string name="second_fragment_label">Select location</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="app_id">route-tracking-bdcml</string>
+    <string name="test_email">dailytechfan@gmail.com</string>
+    <string name="test_password">PanCakes</string>
+
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="destination">Destination</string>
+    <string name="origin">Origin</string>
+    <string name="destination_address">Destination address</string>
+    <string name="origin_address">Origin address</string>
+    <string name="google_maps">Google Maps</string>
+    <string name="departing_time">Departing time</string>
+    <string name="arriving_time">Arriving time</string>
+    <string name="time">00:00</string>
+    <string name="comments">Comments</string>
+    <string name="car">Car</string>
+    <string name="walk">Walk</string>
+    <string name="submit">Submit</string>
+    <string name="means_of_transport_used">Means of transport used</string>
+    <string name="public_transport">Public transport</string>
+    <string name="address">Address</string>
+</resources>

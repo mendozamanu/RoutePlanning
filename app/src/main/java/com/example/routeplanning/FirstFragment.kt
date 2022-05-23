@@ -66,6 +66,7 @@ class FirstFragment : Fragment() {
         val originButton: Button = view.findViewById(R.id.button_first_o)
         val destButton: Button = view.findViewById(R.id.button_first_d)
 
+        //https://developer.android.com/training/basics/fragments/pass-data-between?hl=es-419
         setFragmentResultListener("directionsRequested"){
             key, bundle ->
             val result2 = bundle.getStringArrayList("bundleKey") as ArrayList<String>

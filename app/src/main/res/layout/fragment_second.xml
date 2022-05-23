@@ -19,8 +19,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:focusable="true" />
 
-    <com.google.android.gms.maps.MapView
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
+        class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="410dp"
         android:layout_height="732dp"
         android:contentDescription="@string/google_maps"
@@ -29,19 +30,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/editAddress"
-        android:layout_width="wrap_content"
+    <androidx.cardview.widget.CardView
+        android:layout_width="206dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:ems="10"
-        android:hint="@string/address"
-        android:inputType="textPostalAddress"
-        android:minHeight="48dp"
-        android:textColorHint="#4E342E"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="36dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/map" />
+        app:layout_constraintTop_toTopOf="parent" >
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/autocomplete_fragment"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

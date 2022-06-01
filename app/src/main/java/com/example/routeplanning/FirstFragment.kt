@@ -129,7 +129,8 @@ class FirstFragment : Fragment() {
                 } else {
                     Toast.makeText(
                         activity,
-                        "MongoDB realm authentication error. Try again or contact admin",
+                        "Error de autenticación en MongoDB Realm. Inténtelo de nuevo o " +
+                                "contacte al administrador",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -151,7 +152,7 @@ class FirstFragment : Fragment() {
             Log.d("SUBMITTED status", submitted.toString())
             if (submitted == 1) {
                 Toast.makeText(
-                    activity, "Already submitted",
+                    activity, "Ruta ya confirmada",
                     Toast.LENGTH_SHORT
                 ).show()
                 return@setOnClickListener
@@ -165,7 +166,7 @@ class FirstFragment : Fragment() {
                 Log.d("Debug1", "DEPART at: $org")
             } else {
                 Toast.makeText(
-                    activity, "Error on date, check that the time is correct" +
+                    activity, "Error en la fecha, compruebe que la hora es correcta" +
                             " XX:XX", Toast.LENGTH_LONG
                 ).show()
                 return@setOnClickListener
@@ -177,13 +178,13 @@ class FirstFragment : Fragment() {
                 Log.d("Debug1", "ARRIVE at: $dest")
             } else {
                 Toast.makeText(
-                    activity, "Error on date, check that the time is correct" +
+                    activity, "Error en la fecha, compruebe que la hora es correcta" +
                             " XX:XX", Toast.LENGTH_LONG
                 ).show()
                 return@setOnClickListener
             }
 
-            Toast.makeText(activity, "Submitting...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
             //submit = 1
             Log.i("Status", "Synced realm: $syncedRealm")
             if (syncedRealm?.isClosed == false) {

@@ -40,9 +40,12 @@ import java.util.*
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
+
+
 class SecondFragment: Fragment(), OnMapReadyCallback,
     GoogleMap.OnMyLocationButtonClickListener,
-    GoogleMap.OnMyLocationClickListener{ //extends Fragment and implements OnMapReadyC
+    GoogleMap.OnMarkerDragListener,
+    GoogleMap.OnMyLocationClickListener{ //extends Fragment and implements callbacks and listeners
 
     private var _binding: FragmentSecondBinding? = null
     private var editAddr: FragmentContainerView? = null
@@ -54,14 +57,13 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     // onDestroyView.
     //private val binding get() = _binding!!
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
         val view: View = inflater.inflate(R.layout.fragment_second, container, false)
-        Places.initialize(requireActivity(), GOOGLE_MAPS_API, Locale.US)
+        Places.initialize(requireActivity(), GOOGLE_MAPS_API)
         editAddr = view.findViewById(R.id.autocomplete_fragment)
 
         // Initialize the AutocompleteSupportFragment.
@@ -96,12 +98,12 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         var request = 0
         var result = arrayListOf("", "")
 
-        setFragmentResultListener("requestedAddrO") { key, bundle ->
+        setFragmentResultListener("requestedAddrO") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             request = 0
             //editAddr!!.setText(result.first().toString())
         }//Origin requested
-        setFragmentResultListener("requestedAddrD") { key, bundle ->
+        setFragmentResultListener("requestedAddrD") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             request = 1
             //editAddr!!.setText(result.last().toString())
@@ -140,13 +142,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         mMap = googleMap
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
+        mMap.setOnMarkerDragListener(this)
 
         if (ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
             mMap.isMyLocationEnabled = true
         } else {
-            Toast.makeText(activity, "Accept the location request in order to be able " +
-                    "to save your current location", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, "Acepta los permisos de localización para " +
+                    "poder guardar tu ubicación actual", Toast.LENGTH_LONG).show()
             ActivityCompat.requestPermissions(
                 requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 100)
@@ -157,10 +160,26 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
         }
 
-
+        //Default map location:
         val madrid = LatLng(40.416729, -3.703339)
         marker = mMap.addMarker(MarkerOptions().position(madrid))!!
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
+        //
+
+        mMap.setOnMapClickListener { latlng -> // Clears the previously touched position
+            mMap.clear()
+            // Animating to the touched position
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(latlng))
+
+            val location = LatLng(latlng.latitude, latlng.longitude)
+            address = getAddress(location.latitude, location.longitude)
+            Log.i("ADDR", address)
+            mMap.addMarker(MarkerOptions()
+                .position(location)
+                .draggable(true)
+            )
+        }
+
     }
 
     override fun onDestroyView() {
@@ -168,9 +187,20 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         _binding = null
     }
 
+    override fun onMarkerDrag(p0: Marker) {
+    }
+
+    override fun onMarkerDragEnd(marker: Marker) {
+        address = getAddress(marker.position.latitude, marker.position.longitude)
+    }
+
+    override fun onMarkerDragStart(p0: Marker) {
+    }
+
     override fun onMyLocationButtonClick(): Boolean {
         //Sets the map to the position of the user
-        return false
+        Toast.makeText(activity, "Obteniendo tu posición...", Toast.LENGTH_SHORT).show()
+        return false //the default behavior should still occur
     }
 
     override fun onMyLocationClick(p0: Location) {
@@ -182,8 +212,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
     }
 
-    private fun getAddress(lat: Double, lng: Double): String {
-        val geocoder = Geocoder(requireActivity(), Locale.US)
+    private fun getAddress(lat: Double, lng: Double): String { //Get text address from LatLng data
+        val geocoder = Geocoder(requireActivity())
         val list = geocoder.getFromLocation(lat, lng, 1)
         return list[0].getAddressLine(0)
     }

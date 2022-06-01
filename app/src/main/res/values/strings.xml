@@ -2,8 +2,8 @@
     <string name="app_name">RoutePlanning</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">Daily Route Form</string>
-    <string name="second_fragment_label">Select location</string>
+    <string name="first_fragment_label">Rutas habituales</string>
+    <string name="second_fragment_label">Selección de posición</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
@@ -12,21 +12,20 @@
     <string name="test_password">PanCakes</string>
 
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
-    <string name="destination">Destination</string>
-    <string name="origin">Origin</string>
-    <string name="destination_address">Destination address</string>
-    <string name="origin_address">Origin address</string>
+    <string name="search">Buscar</string>
+    <string name="destination">Destino</string>
+    <string name="origin">Origen</string>
+    <string name="destination_address">Dirección de destino</string>
+    <string name="origin_address">Dirección de origen</string>
     <string name="google_maps">Google Maps</string>
-    <string name="departing_time">Departing time</string>
-    <string name="arriving_time">Arriving time</string>
+    <string name="departing_time">Hora de salida deseada</string>
+    <string name="arriving_time">Hora de llegada deseada</string>
     <string name="time">00:00</string>
-    <string name="comments">Comments</string>
-    <string name="car">Car</string>
-    <string name="walk">Walk</string>
-    <string name="submit">Submit</string>
-    <string name="means_of_transport_used">Means of transport used</string>
-    <string name="public_transport">Public transport</string>
-    <string name="address">Address</string>
+    <string name="comments">Comentarios</string>
+    <string name="car">Coche</string>
+    <string name="walk">Caminar</string>
+    <string name="submit">Enviar</string>
+    <string name="means_of_transport_used">Medios de transporte empleados</string>
+    <string name="public_transport">Transporte público</string>
+    <string name="address">Dirección</string>
 </resources>

@@ -20,7 +20,6 @@
     <string name="google_maps">Google Maps</string>
     <string name="departing_time">Hora de salida deseada</string>
     <string name="arriving_time">Hora de llegada deseada</string>
-    <string name="time">00:00</string>
     <string name="comments">Comentarios</string>
     <string name="car">Coche</string>
     <string name="walk">Caminar</string>
@@ -28,4 +27,7 @@
     <string name="means_of_transport_used">Medios de transporte empleados</string>
     <string name="public_transport">Transporte público</string>
     <string name="address">Dirección</string>
+    <string name="hour">00:00</string>
+    <string name="rutas">Rutas</string>
+    <string name="reiniciar">Reiniciar</string>
 </resources>

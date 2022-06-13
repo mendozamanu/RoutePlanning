@@ -72,10 +72,10 @@
         android:layout_marginTop="48dp"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/time"
+        android:hint="@string/hour"
         android:inputType="time"
         android:minHeight="48dp"
-        android:text="00:00"
+        android:text="@string/hour"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/destAddr"
         tools:ignore="DuplicateSpeakableTextCheck" />
@@ -88,10 +88,10 @@
         android:layout_marginTop="48dp"
         android:autofillHints=""
         android:ems="10"
-        android:hint="@string/time"
+        android:hint="@string/hour"
         android:inputType="time"
         android:minHeight="48dp"
-        android:text="00:00"
+        android:text="@string/hour"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editTextTime" />
 
@@ -166,7 +166,7 @@
         android:layout_marginTop="40dp"
         android:text="@string/submit"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.471"
+        app:layout_constraintHorizontal_bias="0.257"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/comments" />
 
@@ -212,5 +212,16 @@
         app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="@string/reiniciar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.476"
+        app:layout_constraintStart_toEndOf="@+id/sendButton"
+        app:layout_constraintTop_toBottomOf="@+id/comments" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

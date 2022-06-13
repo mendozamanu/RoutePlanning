@@ -3,6 +3,7 @@ package com.example.routeplanning
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
@@ -34,7 +36,7 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.util.*
+import java.io.IOException
 
 
 /**
@@ -52,6 +54,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private lateinit var mMap: GoogleMap
     private lateinit var marker: Marker
     private var address = ""
+    private var result = arrayListOf("","")
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -63,6 +66,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     ): View {
 
         val view: View = inflater.inflate(R.layout.fragment_second, container, false)
+
         Places.initialize(requireActivity(), GOOGLE_MAPS_API)
         editAddr = view.findViewById(R.id.autocomplete_fragment)
 
@@ -96,16 +100,17 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         mapFragment.getMapAsync(this)
 
         var request = 0
-        var result = arrayListOf("", "")
 
         setFragmentResultListener("requestedAddrO") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             request = 0
+            address = result[0]
             //editAddr!!.setText(result.first().toString())
         }//Origin requested
         setFragmentResultListener("requestedAddrD") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             request = 1
+            address = result[1]
             //editAddr!!.setText(result.last().toString())
         }//Destination requested
 
@@ -159,12 +164,50 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 mMap.isMyLocationEnabled = true
             }
         }
-
+        Log.d("Addr", address)
         //Default map location:
-        val madrid = LatLng(40.416729, -3.703339)
-        marker = mMap.addMarker(MarkerOptions().position(madrid))!!
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
-        //
+        if(address != "") {
+            val geocoder = Geocoder(requireActivity())
+            val builder = LatLngBounds.Builder()
+            Log.d("RESULT", result.toString())
+            try {
+                if(result[0]!="") {
+                    // May throw an IOException
+                    val addr = geocoder.getFromLocationName(result[0], 1)
+                    Log.d("ADDR", addr[0].toString())
+                    val location: Address = addr[0]
+                    val p1 = LatLng(location.latitude, location.longitude)
+                    val marker1 = mMap.addMarker(MarkerOptions().position(p1))!!
+                    builder.include(marker1.position)
+                }
+                if(result[1]!=""){
+                    val addr = geocoder.getFromLocationName(result[1], 1)
+                    Log.d("ADDR", addr[0].toString())
+                    val location: Address = addr[0]
+                    val p2 = LatLng(location.latitude, location.longitude)
+                    val marker2 = mMap.addMarker(MarkerOptions().position(p2))!!
+                    builder.include(marker2.position)
+                }
+                val bounds = builder.build()
+                val width = resources.displayMetrics.widthPixels
+                val height = resources.displayMetrics.heightPixels
+
+                val padding = (width*0.15).toInt() // offset from edges of the map in pixels
+                val cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding)
+
+                mMap.moveCamera(cu)
+
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+            }
+
+        }
+        else{
+            val madrid = LatLng(40.416729, -3.703339)
+            marker = mMap.addMarker(MarkerOptions().position(madrid))!!
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
+
+        }
 
         mMap.setOnMapClickListener { latlng -> // Clears the previously touched position
             mMap.clear()

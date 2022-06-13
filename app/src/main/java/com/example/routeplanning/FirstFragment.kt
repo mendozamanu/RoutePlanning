@@ -1,5 +1,6 @@
 package com.example.routeplanning
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,6 +13,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.example.routeplanning.databinding.FragmentFirstBinding
+import com.google.android.material.navigation.NavigationView
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
@@ -42,6 +44,8 @@ open class Routes(
 var user: User? = null
 var syncedRealm: Realm? = null
 private var submitted = 0
+var routes = MutableList(5){Routes()} //Allowing max 5 routes at first
+var routeCount = 0
 
 class FirstFragment : Fragment() {
 
@@ -62,6 +66,8 @@ class FirstFragment : Fragment() {
 
         editOriginAdr = view.findViewById(R.id.originAddr)
         editDestAdr = view.findViewById(R.id.destAddr)
+
+        //_binding = FragmentFirstBinding.inflate(layoutInflater)
 
         val originButton: Button = view.findViewById(R.id.button_first_o)
         val destButton: Button = view.findViewById(R.id.button_first_d)
@@ -122,7 +128,8 @@ class FirstFragment : Fragment() {
                             // the realm should live exactly as long as the activity, so assign
                             // the realm to a member variable
                             syncedRealm = _realm
-                            Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
+                            Log.i("RealmOK", "Successfully connected " +
+                                    "with realm $syncedRealm")
                         }
                     })
 
@@ -130,7 +137,7 @@ class FirstFragment : Fragment() {
                     Toast.makeText(
                         activity,
                         "Error de autenticación en MongoDB Realm. Inténtelo de nuevo o " +
-                                "contacte al administrador",
+                                "revise su conexión a internet",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -140,11 +147,11 @@ class FirstFragment : Fragment() {
 
     }
 
+     @SuppressLint("CutPasteId", "SetTextI18n")
      override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
          val sendButton: Button = view.findViewById(R.id.sendButton)
-
 
          sendButton.setOnClickListener {
             //MongoDB connect and send data
@@ -189,30 +196,75 @@ class FirstFragment : Fragment() {
             Log.i("Status", "Synced realm: $syncedRealm")
             if (syncedRealm?.isClosed == false) {
                 submitted = 1
+                routeCount += 1
+                val comm = view.findViewById<EditText>(R.id.comments).text.toString()
+                val obId = ObjectId()
+
                 syncedRealm?.executeTransaction { transact: Realm ->
-                    data = transact.createObject(Routes::class.java, ObjectId())
+                    data = transact.createObject(Routes::class.java, obId)
+                    routes[routeCount-1]._id = obId
+
                     data?.origin = editOriginAdr?.text.toString()
+                    routes[routeCount-1].origin = editOriginAdr?.text.toString()
+
                     data?.destination = editDestAdr?.text.toString()
+                    routes[routeCount-1].destination = editDestAdr?.text.toString()
+
                     data?.depart = org
                     data?.arrival = dest
+                    routes[routeCount-1].depart = org
+                    routes[routeCount-1].arrival = dest
+
                     if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
                         data?.publictransport = true
+                        routes[routeCount-1].publictransport = true
                     }
                     if (view.findViewById<CheckBox>(R.id.checkBox2).isChecked) {
                         data?.car = true
+                        routes[routeCount-1].car = true
                     }
                     if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
                         data?.walk = true
+                        routes[routeCount-1].walk = true
                     }
-                    data?.comment = view.findViewById<EditText>(R.id.comments).text.toString()
+                    data?.comment = comm
+                    routes[routeCount-1].comment = comm
+
                 }
+                activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add("Ruta $routeCount")
+
+                val task = syncedRealm!!.where(Routes::class.java)
+                    .equalTo("_id", routes[routeCount-1]._id).findFirst()
+                Log.v("EXAMPLE", "Fetched object by primary key: $task")
 
             } else {
                 Log.d("REALM error", "realm closed or wrong ref")
+                Toast.makeText(activity, "Error al guardar la ruta, revise " +
+                        "su conexión a internet", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
         }
+
+         val resetButton: Button = view.findViewById(R.id.resetButton)
+
+         resetButton.setOnClickListener {
+             view.findViewById<TextView>(R.id.editTextTime)?.text = "00:00"
+             view.findViewById<TextView>(R.id.editTextTime2)?.text = "00:00"
+             view.findViewById<EditText>(R.id.originAddr)?.setText("")
+             view.findViewById<EditText>(R.id.destAddr)?.setText("")
+             view.findViewById<CheckBox>(R.id.checkBox)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.checkBox2)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.checkBox3)?.isChecked = false
+             view.findViewById<EditText>(R.id.comments)?.setText("")
+
+             submitted = 0
+         }
     }
+
+    fun getRoutes():MutableList<Routes> {
+        return routes
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

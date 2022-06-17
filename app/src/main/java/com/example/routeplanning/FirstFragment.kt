@@ -74,7 +74,7 @@ class FirstFragment : Fragment() {
 
         //https://developer.android.com/training/basics/fragments/pass-data-between?hl=es-419
         setFragmentResultListener("directionsRequested"){
-            key, bundle ->
+            _, bundle ->
             val result2 = bundle.getStringArrayList("bundleKey") as ArrayList<String>
             editOriginAdr!!.setText(result2[0])
             editDestAdr!!.setText(result2[1])

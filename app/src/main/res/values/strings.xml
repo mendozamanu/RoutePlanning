@@ -27,4 +27,17 @@
     <string name="hour">00:00</string>
     <string name="rutas">Rutas</string>
     <string name="reiniciar">Reiniciar</string>
+    <string name="change_directions">Change directions</string>
+    <string name="llegada">Llegada</string>
+    <string name="salida">Salida</string>
+    <string name="dias">Dias</string>
+    <string name="weekdays">Dias laborables</string>
+    <string name="weekend">Fines de semana</string>
+    <string name="l">L</string>
+    <string name="m">M</string>
+    <string name="x">X</string>
+    <string name="j">J</string>
+    <string name="v">V</string>
+    <string name="s">S</string>
+    <string name="d">D</string>
 </resources>

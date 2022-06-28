@@ -10,10 +10,10 @@
         android:id="@+id/button_first_o"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
         android:layout_marginTop="36dp"
-        android:layout_marginEnd="68dp"
         android:text="@string/search"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/originAddr"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="DuplicateSpeakableTextCheck"
         tools:text="@string/search" />
@@ -55,18 +55,15 @@
         android:id="@+id/button_first_d"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="6dp"
         android:layout_marginTop="48dp"
-        android:layout_marginEnd="68dp"
         android:text="@string/search"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/destAddr"
         app:layout_constraintTop_toBottomOf="@+id/button_first_o" />
 
     <EditText
         android:id="@+id/editTextTime"
-        android:layout_width="wrap_content"
+        android:layout_width="107dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="48dp"
@@ -82,9 +79,9 @@
 
     <EditText
         android:id="@+id/editTextTime2"
-        android:layout_width="wrap_content"
+        android:layout_width="107dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="224dp"
         android:layout_marginTop="48dp"
         android:autofillHints=""
         android:ems="10"
@@ -93,25 +90,29 @@
         android:minHeight="48dp"
         android:text="@string/hour"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTime" />
+        app:layout_constraintTop_toBottomOf="@+id/button_first_d" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
+        android:layout_marginTop="22dp"
         android:layout_marginBottom="7dp"
         android:text="@string/departing_time"
         app:layout_constraintBottom_toTopOf="@+id/editTextTime"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/destAddr" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginStart="224dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginBottom="4dp"
         android:text="@string/arriving_time"
         app:layout_constraintBottom_toTopOf="@+id/editTextTime2"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_first_d" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -165,16 +166,106 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/comments" />
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:text="@string/dias"
+        app:layout_constraintBottom_toTopOf="@+id/chipGroup"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTime"
+         />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/textView4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTextTime"
+        >
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_1"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:text="@string/weekdays" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_2"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/weekend" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_3"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/l" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_4"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/m" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_5"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/x" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_6"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/j" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_7"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/v" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_8"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/s" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_9"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/d" />
+
+    </com.google.android.material.chip.ChipGroup>
+
     <LinearLayout
         android:id="@+id/linearLayout"
-        android:layout_width="332dp"
-        android:layout_height="54dp"
-        android:layout_marginTop="48dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.493"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTime2">
+        app:layout_constraintTop_toBottomOf="@id/chipGroup"
+        android:layout_marginTop="40dp"
+        >
 
         <CheckBox
             android:id="@+id/checkBox3"
@@ -199,6 +290,7 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="7dp"

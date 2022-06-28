@@ -12,7 +12,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -34,6 +36,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.PolyUtil
 import org.json.JSONObject
@@ -61,6 +64,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private var polyline = 0
     private var autocompleteFragment : AutocompleteSupportFragment? = null
     private var autocompleteFragment2 : AutocompleteSupportFragment? = null
+
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -120,7 +124,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
 
             override fun onError(status: Status) {
-                // TODO: Handle the error.
                 Log.i("TAG", "An error occurred: $status")
             }
         })
@@ -128,6 +131,19 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val mapFragment = childFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        val timedep = view.findViewById<EditText>(R.id.timeDepart)
+        val timearr = view.findViewById<EditText>(R.id.timeArrive)
+        var days:String
+        val chip: Chip = view.findViewById(R.id.chip_1)
+        val chip2: Chip = view.findViewById(R.id.chip_2)
+        val chip3: Chip = view.findViewById(R.id.chip_3)
+        val chip4: Chip = view.findViewById(R.id.chip_4)
+        val chip5: Chip = view.findViewById(R.id.chip_5)
+        val chip6: Chip = view.findViewById(R.id.chip_6)
+        val chip7: Chip = view.findViewById(R.id.chip_7)
+        val chip8: Chip = view.findViewById(R.id.chip_8)
+        val chip9: Chip = view.findViewById(R.id.chip_9)
 
         setFragmentResultListener("requestedAddrO") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
@@ -140,8 +156,28 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(result[1]!="") {
                 autocompleteFragment2!!.setText(result[1])
             }
+            timedep.setText(result[2])
+            timearr.setText(result[3])
+            days = result[4]
+
+            if(days!=""){
+                for (i in days.indices){
+                    when(days[i].toString()){
+                        chip.text -> chip.isChecked = true
+                        chip2.text -> chip2.isChecked = true
+                        chip3.text -> chip3.isChecked = true
+                        chip4.text -> chip4.isChecked = true
+                        chip5.text -> chip5.isChecked = true
+                        chip6.text -> chip6.isChecked = true
+                        chip7.text -> chip7.isChecked = true
+                        chip8.text -> chip8.isChecked = true
+                        chip9.text -> chip9.isChecked = true
+                    }
+                }
+            }
 
         }//Origin requested
+
         setFragmentResultListener("requestedAddrD") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             Log.d("RESULT", result.toString())
@@ -153,28 +189,62 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(result[1]!="") {
                 autocompleteFragment2!!.setText(result[1])
             }
+            timedep.setText(result[2])
+            timearr.setText(result[3])
+            days = result[4]
+
+            if(days!=""){
+                for (i in days.indices){
+                    when(days[i].toString()){
+                        chip.text -> chip.isChecked = true
+                        chip2.text -> chip2.isChecked = true
+                        chip3.text -> chip3.isChecked = true
+                        chip4.text -> chip4.isChecked = true
+                        chip5.text -> chip5.isChecked = true
+                        chip6.text -> chip6.isChecked = true
+                        chip7.text -> chip7.isChecked = true
+                        chip8.text -> chip8.isChecked = true
+                        chip9.text -> chip9.isChecked = true
+                    }
+                }
+            }
 
         }//Destination requested
 
         val secondButton: FloatingActionButton = view.findViewById(R.id.buttonSecond)
         secondButton.setOnClickListener {
-            result[0] = address
-            result[1] = address2
+            days=""
+            if(chip.isChecked) days+=(chip.text.toString())
+            if(chip2.isChecked) days+=(chip2.text.toString())
+            if(chip3.isChecked) days+=(chip3.text.toString())
+            if(chip4.isChecked) days+=(chip4.text.toString())
+            if(chip5.isChecked) days+=(chip5.text.toString())
+            if(chip6.isChecked) days+=(chip6.text.toString())
+            if(chip7.isChecked) days+=(chip7.text.toString())
+            if(chip8.isChecked) days+=(chip8.text.toString())
+            if(chip9.isChecked) days+=(chip9.text.toString())
 
             if(polyline == 1){ //Clear previous polyline
                 mMap.clear()
+                polyline=0
+            }
+            if(address != "" && address2 !=""){
+                result[0] = address
+                result[1] = address2
+                result[2] = timedep.text.toString()
+                result[3] = timearr.text.toString()
+                result[4] = days
+
                 marker = mMap.addMarker(MarkerOptions().position(marker!!.position)
                     .draggable(true))
                 marker2 = mMap.addMarker(MarkerOptions().position(marker2!!.position)
                     .draggable(true))
-                polyline=0
-            }
-            setFragmentResult(
-                    "directionsRequested",
-                    bundleOf("bundleKey" to result)
-            )
-            //Route generation from the given points
-            if(address != "" && address2 !=""){
+
+                setFragmentResult(
+                        "directionsRequested",
+                        bundleOf("bundleKey" to result)
+                )
+                //Route generation from the given points
                 val path: MutableList<List<LatLng>> = ArrayList()
                 val urlDirections = "https://maps.googleapis.com/maps/api/directions/json?origin="+
                         marker?.position?.latitude.toString()+","+marker?.position?.
@@ -219,8 +289,20 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 val requestQueue = Volley.newRequestQueue(requireContext())
                 requestQueue.add(directionsRequest)
             }
+            else{
+                Toast.makeText(activity, "No se ha proporcionado una ruta válida",
+                    Toast.LENGTH_SHORT).show()
+            }
             //findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
 
+        }
+        val swapButton: AppCompatImageButton = view.findViewById(R.id.imageButton)
+        swapButton.setOnClickListener {
+            val aux = address
+            address = address2
+            address2 = aux
+            autocompleteFragment!!.setText(address)
+            autocompleteFragment2!!.setText(address2)
         }
         return view
 
@@ -297,6 +379,30 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
         }
 
+        autocompleteFragment!!.view!!.findViewById<View>(com.google.android.libraries.
+        places.R.id.places_autocomplete_clear_button)
+            .setOnClickListener {
+                autocompleteFragment!!.setText("")
+                Log.d("MARKER", marker.toString())
+                if(marker != null) marker!!.remove()
+                address=""
+                marker=null
+                clicked-=1
+                it.visibility = View.GONE
+            }
+
+        autocompleteFragment2!!.view!!.findViewById<View>(com.google.android.libraries.
+        places.R.id.places_autocomplete_clear_button)
+            .setOnClickListener {
+                autocompleteFragment2!!.setText("")
+                Log.d("MARKER2", marker2.toString())
+                if(marker2 != null) marker2!!.remove()
+                marker2=null
+                address2=""
+                clicked-=1
+                it.visibility = View.GONE
+            }
+
         mMap.setOnMapClickListener { latlng -> // Clears the previously touched position
 
             try{
@@ -333,7 +439,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
             catch (ex: Exception){
                 Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                    , Toast.LENGTH_SHORT)
+                    , Toast.LENGTH_SHORT).show()
                 Log.e("ERROR Locat", ex.toString())
             }
         }
@@ -364,9 +470,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
     override fun onMarkerDragStart(p0: Marker) {
     }
-
-    //https://medium.com/@trientran/android-working-with-google-maps-and-directions-api-44765433f19
-    //Directions API
 
     override fun onMyLocationButtonClick(): Boolean {
         //Sets the map to the position of the user

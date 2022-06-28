@@ -1,6 +1,5 @@
 package com.example.routeplanning
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +12,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.navigation.fragment.findNavController
 import com.example.routeplanning.databinding.FragmentFirstBinding
+import com.google.android.material.chip.Chip
 import com.google.android.material.navigation.NavigationView
 import io.realm.Realm
 import io.realm.RealmObject
@@ -24,6 +24,7 @@ import io.realm.mongodb.User
 import io.realm.mongodb.sync.SyncConfiguration
 import org.bson.types.ObjectId
 
+
 open class Routes(
     @PrimaryKey var _id: ObjectId? = ObjectId(),
     var origin: String = "",
@@ -33,7 +34,8 @@ open class Routes(
     var publictransport: Boolean = false,
     var car: Boolean = false,
     var walk: Boolean = false,
-    var comment: String = ""
+    var comment: String = "",
+    var days: String = ""
 
 ): RealmObject()
 
@@ -52,6 +54,9 @@ class FirstFragment : Fragment() {
     private var _binding: FragmentFirstBinding? = null
     private var editOriginAdr: EditText? = null
     private var editDestAdr: EditText? = null
+    private var org: EditText? = null
+    private var dest: EditText? = null
+    private var days = ""
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -66,11 +71,22 @@ class FirstFragment : Fragment() {
 
         editOriginAdr = view.findViewById(R.id.originAddr)
         editDestAdr = view.findViewById(R.id.destAddr)
+        org = view.findViewById(R.id.editTextTime)
+        dest = view.findViewById(R.id.editTextTime2)
 
         //_binding = FragmentFirstBinding.inflate(layoutInflater)
 
         val originButton: Button = view.findViewById(R.id.button_first_o)
         val destButton: Button = view.findViewById(R.id.button_first_d)
+        val chip: Chip = view.findViewById(R.id.chip_1)
+        val chip2: Chip = view.findViewById(R.id.chip_2)
+        val chip3: Chip = view.findViewById(R.id.chip_3)
+        val chip4: Chip = view.findViewById(R.id.chip_4)
+        val chip5: Chip = view.findViewById(R.id.chip_5)
+        val chip6: Chip = view.findViewById(R.id.chip_6)
+        val chip7: Chip = view.findViewById(R.id.chip_7)
+        val chip8: Chip = view.findViewById(R.id.chip_8)
+        val chip9: Chip = view.findViewById(R.id.chip_9)
 
         //https://developer.android.com/training/basics/fragments/pass-data-between?hl=es-419
         setFragmentResultListener("directionsRequested"){
@@ -78,19 +94,58 @@ class FirstFragment : Fragment() {
             val result2 = bundle.getStringArrayList("bundleKey") as ArrayList<String>
             editOriginAdr!!.setText(result2[0])
             editDestAdr!!.setText(result2[1])
+            org!!.setText(result2[2])
+            dest!!.setText(result2[3])
+            days = (result2[4])
+            if(days!=""){
+                for (i in days.indices){
+                    when(days[i].toString()){
+                        chip.text -> chip.isChecked = true
+                        chip2.text -> chip2.isChecked = true
+                        chip3.text -> chip3.isChecked = true
+                        chip4.text -> chip4.isChecked = true
+                        chip5.text -> chip5.isChecked = true
+                        chip6.text -> chip6.isChecked = true
+                        chip7.text -> chip7.isChecked = true
+                        chip8.text -> chip8.isChecked = true
+                        chip9.text -> chip9.isChecked = true
+                    }
+                }
+            }
         }
 
         originButton.setOnClickListener {
-            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString())
+            if(chip.isChecked) days+=(chip.text.toString())
+            if(chip2.isChecked) days+=(chip2.text.toString())
+            if(chip3.isChecked) days+=(chip3.text.toString())
+            if(chip4.isChecked) days+=(chip4.text.toString())
+            if(chip5.isChecked) days+=(chip5.text.toString())
+            if(chip6.isChecked) days+=(chip6.text.toString())
+            if(chip7.isChecked) days+=(chip7.text.toString())
+            if(chip8.isChecked) days+=(chip8.text.toString())
+            if(chip9.isChecked) days+=(chip9.text.toString())
+
+            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString(),
+            org!!.text.toString(), dest!!.text.toString(), days)
             setFragmentResult("requestedAddrO", bundleOf("bundledKey" to result))
             Log.d("List", result.toString())
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
 
         destButton.setOnClickListener {
-            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString())
+            if(chip.isChecked) days+=(chip.text.toString())
+            if(chip2.isChecked) days+=(chip2.text.toString())
+            if(chip3.isChecked) days+=(chip3.text.toString())
+            if(chip4.isChecked) days+=(chip4.text.toString())
+            if(chip5.isChecked) days+=(chip5.text.toString())
+            if(chip6.isChecked) days+=(chip6.text.toString())
+            if(chip7.isChecked) days+=(chip7.text.toString())
+            if(chip8.isChecked) days+=(chip8.text.toString())
+            if(chip9.isChecked) days+=(chip9.text.toString())
+            val result = arrayListOf(editOriginAdr!!.text.toString(), editDestAdr!!.text.toString(),
+                org!!.text.toString(), dest!!.text.toString(), days)
             setFragmentResult("requestedAddrD", bundleOf("bundledKey" to result))
-
+            Log.d("List", result.toString())
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
         loginToMongo()
@@ -147,11 +202,36 @@ class FirstFragment : Fragment() {
 
     }
 
-     @SuppressLint("CutPasteId", "SetTextI18n")
      override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
          val sendButton: Button = view.findViewById(R.id.sendButton)
+         val chip: Chip = view.findViewById(R.id.chip_1)
+         val chip2: Chip = view.findViewById(R.id.chip_2)
+         val chip3: Chip = view.findViewById(R.id.chip_3)
+         val chip4: Chip = view.findViewById(R.id.chip_4)
+         val chip5: Chip = view.findViewById(R.id.chip_5)
+         val chip6: Chip = view.findViewById(R.id.chip_6)
+         val chip7: Chip = view.findViewById(R.id.chip_7)
+         val chip8: Chip = view.findViewById(R.id.chip_8)
+         val chip9: Chip = view.findViewById(R.id.chip_9)
+         //chip.setText(chipText)
+         chip.setOnClickListener {
+             Log.d("WD", "Weekdays")
+             //If invoked when chip is "dechecked" the weekday chips are demarked too
+             chip3.isChecked=chip.isChecked
+             chip4.isChecked=chip.isChecked
+             chip5.isChecked=chip.isChecked
+             chip6.isChecked=chip.isChecked
+             chip7.isChecked=chip.isChecked
+         }
+         //chip.setText(chipText)
+         chip2.setOnClickListener {
+             Log.d("WN", "Weekend")
+             chip8.isChecked=chip2.isChecked
+             chip9.isChecked=chip2.isChecked
+         }
+
 
          sendButton.setOnClickListener {
             //MongoDB connect and send data
@@ -227,6 +307,15 @@ class FirstFragment : Fragment() {
                         data?.walk = true
                         routes[routeCount-1].walk = true
                     }
+                    var day = ""
+                    if(chip3.isChecked) day+=(chip3.text.toString())
+                    if(chip4.isChecked) day+=(chip4.text.toString())
+                    if(chip5.isChecked) day+=(chip5.text.toString())
+                    if(chip6.isChecked) day+=(chip6.text.toString())
+                    if(chip7.isChecked) day+=(chip7.text.toString())
+                    if(chip8.isChecked) day+=(chip8.text.toString())
+                    if(chip9.isChecked) day+=(chip9.text.toString())
+                    data?.days = day
                     data?.comment = comm
                     routes[routeCount-1].comment = comm
 
@@ -255,6 +344,15 @@ class FirstFragment : Fragment() {
              view.findViewById<CheckBox>(R.id.checkBox)?.isChecked = false
              view.findViewById<CheckBox>(R.id.checkBox2)?.isChecked = false
              view.findViewById<CheckBox>(R.id.checkBox3)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_1)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_2)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_3)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_4)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_5)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_6)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_7)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_8)?.isChecked = false
+             view.findViewById<CheckBox>(R.id.chip_9)?.isChecked = false
              view.findViewById<EditText>(R.id.comments)?.setText("")
 
              submitted = 0

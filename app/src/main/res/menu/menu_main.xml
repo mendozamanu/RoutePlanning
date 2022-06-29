@@ -6,8 +6,9 @@
     <item
         android:id="@+id/map"
         android:orderInCategory="1"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:icon="@android:drawable/ic_dialog_map"
-        android:title="@string/search" />
+        android:title="@string/search"
+        class="androidx.appcompat.view.menu.ActionMenuItemView"/>
 
 </menu>

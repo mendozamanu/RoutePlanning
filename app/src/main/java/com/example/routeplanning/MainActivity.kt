@@ -1,7 +1,6 @@
 package com.example.routeplanning
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.CheckBox
@@ -16,6 +15,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.routeplanning.databinding.ActivityMainBinding
+import com.google.android.material.chip.Chip
 import com.google.android.material.navigation.NavigationView
 
 
@@ -46,11 +46,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         navView.setupWithNavController(navController)
         navView.setNavigationItemSelectedListener(this)
 
-        //Opcion 1: override onmenuclick listener, conectar a mongodb y modificar los campos del
-        //fragmento 1 al seleccionar una entrada de ruta - problema: como acceder a elem de fragm
-        //navView.menu.add("Prueba")
-
-        //Log.d("Routes", myFragment.getRoutes().toString())
 
     }
 
@@ -76,8 +71,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         // Handle item selection
         myFragment = FirstFragment() //binding.root is the view of the first fragment
 
-        Log.d("ITEM", item.itemId.toString())
-
         binding.root.findViewById<TextView>(R.id.editTextTime)?.text = myFragment.
         getRoutes()[item.itemId].depart
         binding.root.findViewById<TextView>(R.id.editTextTime2)?.text = myFragment.
@@ -94,6 +87,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         getRoutes()[item.itemId].walk
         binding.root.findViewById<EditText>(R.id.comments)?.setText(myFragment.
         getRoutes()[item.itemId].comment)
+
+        for (i in myFragment.getRoutes()[item.itemId].days.indices){
+                when(myFragment.getRoutes()[item.itemId].days[i].toString()){
+                    binding.root.findViewById<Chip>(R.id.chip_3)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_3)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_4)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_4)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_5)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_5)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_6)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_6)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_7)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_7)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_8)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_8)?.isChecked = true
+                    binding.root.findViewById<Chip>(R.id.chip_9)?.text -> binding.root.
+                    findViewById<Chip>(R.id.chip_9)?.isChecked = true
+                }
+            }
 
         return true
     }

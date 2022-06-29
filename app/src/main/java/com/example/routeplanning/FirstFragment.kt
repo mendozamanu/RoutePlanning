@@ -6,7 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.appcompat.view.menu.ActionMenuItemView
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -39,15 +41,15 @@ open class Routes(
 
 ): RealmObject()
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
-
 var user: User? = null
 var syncedRealm: Realm? = null
 private var submitted = 0
 var routes = MutableList(5){Routes()} //Allowing max 5 routes at first
 var routeCount = 0
+
+/**
+ * A simple [Fragment] subclass as the default destination in the navigation.
+ */
 
 class FirstFragment : Fragment() {
 
@@ -78,8 +80,6 @@ class FirstFragment : Fragment() {
 
         val originButton: Button = view.findViewById(R.id.button_first_o)
         val destButton: Button = view.findViewById(R.id.button_first_d)
-        val chip: Chip = view.findViewById(R.id.chip_1)
-        val chip2: Chip = view.findViewById(R.id.chip_2)
         val chip3: Chip = view.findViewById(R.id.chip_3)
         val chip4: Chip = view.findViewById(R.id.chip_4)
         val chip5: Chip = view.findViewById(R.id.chip_5)
@@ -100,8 +100,8 @@ class FirstFragment : Fragment() {
             if(days!=""){
                 for (i in days.indices){
                     when(days[i].toString()){
-                        chip.text -> chip.isChecked = true
-                        chip2.text -> chip2.isChecked = true
+                        //chip.text -> chip.isChecked = true
+                        //chip2.text -> chip2.isChecked = true
                         chip3.text -> chip3.isChecked = true
                         chip4.text -> chip4.isChecked = true
                         chip5.text -> chip5.isChecked = true
@@ -115,8 +115,9 @@ class FirstFragment : Fragment() {
         }
 
         originButton.setOnClickListener {
-            if(chip.isChecked) days+=(chip.text.toString())
-            if(chip2.isChecked) days+=(chip2.text.toString())
+            //if(chip.isChecked) days+=(chip.text.toString())  //Chip1 & 2 are helpers to autofill
+                                                               // other chips
+            //if(chip2.isChecked) days+=(chip2.text.toString())
             if(chip3.isChecked) days+=(chip3.text.toString())
             if(chip4.isChecked) days+=(chip4.text.toString())
             if(chip5.isChecked) days+=(chip5.text.toString())
@@ -130,11 +131,14 @@ class FirstFragment : Fragment() {
             setFragmentResult("requestedAddrO", bundleOf("bundledKey" to result))
             Log.d("List", result.toString())
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            val item = requireActivity().findViewById<ActionMenuItemView>(R.id.map)
+            item.isVisible = false
+
         }
 
         destButton.setOnClickListener {
-            if(chip.isChecked) days+=(chip.text.toString())
-            if(chip2.isChecked) days+=(chip2.text.toString())
+            //if(chip.isChecked) days+=(chip.text.toString())
+            //if(chip2.isChecked) days+=(chip2.text.toString())
             if(chip3.isChecked) days+=(chip3.text.toString())
             if(chip4.isChecked) days+=(chip4.text.toString())
             if(chip5.isChecked) days+=(chip5.text.toString())
@@ -147,6 +151,8 @@ class FirstFragment : Fragment() {
             setFragmentResult("requestedAddrD", bundleOf("bundledKey" to result))
             Log.d("List", result.toString())
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            val item = requireActivity().findViewById<ActionMenuItemView>(R.id.map)
+            item.isVisible = false
         }
         loginToMongo()
 
@@ -215,9 +221,9 @@ class FirstFragment : Fragment() {
          val chip7: Chip = view.findViewById(R.id.chip_7)
          val chip8: Chip = view.findViewById(R.id.chip_8)
          val chip9: Chip = view.findViewById(R.id.chip_9)
-         //chip.setText(chipText)
+
          chip.setOnClickListener {
-             Log.d("WD", "Weekdays")
+             Log.i("WD", "Weekdays")
              //If invoked when chip is "dechecked" the weekday chips are demarked too
              chip3.isChecked=chip.isChecked
              chip4.isChecked=chip.isChecked
@@ -225,9 +231,9 @@ class FirstFragment : Fragment() {
              chip6.isChecked=chip.isChecked
              chip7.isChecked=chip.isChecked
          }
-         //chip.setText(chipText)
+
          chip2.setOnClickListener {
-             Log.d("WN", "Weekend")
+             Log.i("WN", "Weekend")
              chip8.isChecked=chip2.isChecked
              chip9.isChecked=chip2.isChecked
          }
@@ -250,7 +256,7 @@ class FirstFragment : Fragment() {
             val org = view.findViewById<TextView>(R.id.editTextTime).text.toString()
             val values: List<String> = org.split(":")
             if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
-                Log.d("Debug1", "DEPART at: $org")
+                Log.i("Depart", "DEPART at: $org")
             } else {
                 Toast.makeText(
                     activity, "Error en la fecha, compruebe que la hora es correcta" +
@@ -318,6 +324,7 @@ class FirstFragment : Fragment() {
                     data?.days = day
                     data?.comment = comm
                     routes[routeCount-1].comment = comm
+                    routes[routeCount-1].days = day
 
                 }
                 activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add("Ruta $routeCount")
@@ -327,7 +334,7 @@ class FirstFragment : Fragment() {
                 Log.v("EXAMPLE", "Fetched object by primary key: $task")
 
             } else {
-                Log.d("REALM error", "realm closed or wrong ref")
+                Log.e("REALM error", "realm closed or wrong ref")
                 Toast.makeText(activity, "Error al guardar la ruta, revise " +
                         "su conexión a internet", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener

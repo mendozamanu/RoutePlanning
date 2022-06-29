@@ -145,6 +145,22 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val chip8: Chip = view.findViewById(R.id.chip_8)
         val chip9: Chip = view.findViewById(R.id.chip_9)
 
+        chip.setOnClickListener {
+
+            //If invoked when chip is "dechecked" the weekday chips are demarked too
+            chip3.isChecked=chip.isChecked
+            chip4.isChecked=chip.isChecked
+            chip5.isChecked=chip.isChecked
+            chip6.isChecked=chip.isChecked
+            chip7.isChecked=chip.isChecked
+        }
+
+        chip2.setOnClickListener {
+
+            chip8.isChecked=chip2.isChecked
+            chip9.isChecked=chip2.isChecked
+        }
+
         setFragmentResultListener("requestedAddrO") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             Log.d("RESULT", result.toString())
@@ -163,8 +179,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(days!=""){
                 for (i in days.indices){
                     when(days[i].toString()){
-                        chip.text -> chip.isChecked = true
-                        chip2.text -> chip2.isChecked = true
+                        //chip.text -> chip.isChecked = true
+                        //chip2.text -> chip2.isChecked = true
                         chip3.text -> chip3.isChecked = true
                         chip4.text -> chip4.isChecked = true
                         chip5.text -> chip5.isChecked = true
@@ -196,8 +212,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(days!=""){
                 for (i in days.indices){
                     when(days[i].toString()){
-                        chip.text -> chip.isChecked = true
-                        chip2.text -> chip2.isChecked = true
+                        //chip.text -> chip.isChecked = true
+                        //chip2.text -> chip2.isChecked = true
                         chip3.text -> chip3.isChecked = true
                         chip4.text -> chip4.isChecked = true
                         chip5.text -> chip5.isChecked = true
@@ -214,8 +230,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val secondButton: FloatingActionButton = view.findViewById(R.id.buttonSecond)
         secondButton.setOnClickListener {
             days=""
-            if(chip.isChecked) days+=(chip.text.toString())
-            if(chip2.isChecked) days+=(chip2.text.toString())
             if(chip3.isChecked) days+=(chip3.text.toString())
             if(chip4.isChecked) days+=(chip4.text.toString())
             if(chip5.isChecked) days+=(chip5.text.toString())

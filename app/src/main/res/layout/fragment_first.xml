@@ -23,7 +23,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="34dp"
         android:layout_marginEnd="32dp"
         android:autofillHints=""
         android:ems="10"
@@ -41,7 +41,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="46dp"
         android:autofillHints=""
         android:ems="10"
         android:hint="@string/destination_address"
@@ -66,7 +66,7 @@
         android:layout_width="107dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="44dp"
         android:autofillHints=""
         android:ems="10"
         android:hint="@string/hour"
@@ -81,8 +81,8 @@
         android:id="@+id/editTextTime2"
         android:layout_width="107dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="224dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginStart="196dp"
+        android:layout_marginTop="40dp"
         android:autofillHints=""
         android:ems="10"
         android:hint="@string/hour"
@@ -97,7 +97,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="22dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="4dp"
         android:text="@string/departing_time"
         app:layout_constraintBottom_toTopOf="@+id/editTextTime"
         app:layout_constraintStart_toStartOf="parent"
@@ -106,19 +106,20 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="224dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginStart="196dp"
+        android:layout_marginTop="22dp"
         android:layout_marginBottom="4dp"
         android:text="@string/arriving_time"
         app:layout_constraintBottom_toTopOf="@+id/editTextTime2"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_first_d" />
+        app:layout_constraintTop_toBottomOf="@+id/button_first_d"
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="5dp"
         android:text="@string/origin"
         app:layout_constraintBottom_toTopOf="@+id/originAddr"
         app:layout_constraintStart_toStartOf="parent" />
@@ -127,7 +128,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="5dp"
         android:text="@string/destination"
         app:layout_constraintBottom_toTopOf="@+id/destAddr"
         app:layout_constraintStart_toStartOf="parent" />
@@ -136,7 +137,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="4dp"
         android:text="@string/comments"
         app:layout_constraintBottom_toTopOf="@+id/comments"
         app:layout_constraintStart_toStartOf="parent" />
@@ -146,14 +147,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="34dp"
+        android:autofillHints=""
         android:ems="10"
         android:inputType="textNoSuggestions|textPersonName"
         android:minHeight="48dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        tools:ignore="SpeakableTextPresentCheck"
-        android:autofillHints="" />
+        tools:ignore="SpeakableTextPresentCheck" />
 
     <Button
         android:id="@+id/sendButton"
@@ -161,10 +162,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
         android:text="@string/submit"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.257"
+        app:layout_constraintHorizontal_bias="0.25"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/comments" />
+        app:layout_constraintTop_toBottomOf="@+id/comments"
+        app:layout_constraintVertical_bias="0.146" />
 
     <TextView
         android:id="@+id/textView3"
@@ -305,9 +308,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
         android:text="@string/reiniciar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.476"
+        app:layout_constraintHorizontal_bias="0.375"
         app:layout_constraintStart_toEndOf="@+id/sendButton"
-        app:layout_constraintTop_toBottomOf="@+id/comments" />
+        app:layout_constraintTop_toBottomOf="@+id/comments"
+        app:layout_constraintVertical_bias="0.146" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

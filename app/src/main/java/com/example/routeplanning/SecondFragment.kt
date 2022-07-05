@@ -12,8 +12,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -38,7 +37,10 @@ import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
 import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationView
 import com.google.maps.android.PolyUtil
+import io.realm.Realm
+import org.bson.types.ObjectId
 import org.json.JSONObject
 import java.io.IOException
 
@@ -59,7 +61,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private var marker2: Marker? = null
     private var address = ""
     private var address2 = ""
-    private var result = arrayListOf("","")
+    private var result = arrayListOf("","","","","","")
     private var clicked = 0
     private var polyline = 0
     private var autocompleteFragment : AutocompleteSupportFragment? = null
@@ -135,6 +137,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val timedep = view.findViewById<EditText>(R.id.timeDepart)
         val timearr = view.findViewById<EditText>(R.id.timeArrive)
         var days:String
+        var transp:String
         val chip: Chip = view.findViewById(R.id.chip_1)
         val chip2: Chip = view.findViewById(R.id.chip_2)
         val chip3: Chip = view.findViewById(R.id.chip_3)
@@ -144,6 +147,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val chip7: Chip = view.findViewById(R.id.chip_7)
         val chip8: Chip = view.findViewById(R.id.chip_8)
         val chip9: Chip = view.findViewById(R.id.chip_9)
+
+        val checkb1: CheckBox = view.findViewById(R.id.checkBox)
+        val checkb2: CheckBox = view.findViewById(R.id.checkBox2)
+        val checkb3: CheckBox = view.findViewById(R.id.checkBox3)
 
         chip.setOnClickListener {
 
@@ -161,6 +168,134 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             chip9.isChecked=chip2.isChecked
         }
 
+        val submit: Button = view.findViewById(R.id.save_button)
+
+        submit.setOnClickListener{
+            val myFragment = FirstFragment() //binding.root is the view of the first fragment
+            myFragment.loginToMongo()
+            val submitted = myFragment.submittedStatus()
+
+            Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
+            Log.d("SUBMITTED status", submitted.toString())
+            if (submitted == 1) {
+                Toast.makeText(
+                    activity, "Ruta ya confirmada",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@setOnClickListener
+            }
+            //Before: data validation
+            var data: Routes?
+
+            val org = view.findViewById<TextView>(R.id.timeDepart).text.toString()
+            val values: List<String> = org.split(":")
+            if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
+                Log.i("Depart", "DEPART at: $org")
+            } else {
+                Toast.makeText(
+                    activity, "Error en la fecha, compruebe que la hora es correcta" +
+                            " XX:XX", Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
+            val dest = view.findViewById<TextView>(R.id.timeArrive).text.toString()
+            val values2: List<String> = dest.split(":")
+            if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
+                Log.d("Debug1", "ARRIVE at: $dest")
+            } else {
+                Toast.makeText(
+                    activity, "Error en la fecha, compruebe que la hora es correcta" +
+                            " XX:XX", Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
+            Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
+            //submit = 1
+            Log.i("Status", "Synced realm: $syncedRealm")
+            if (syncedRealm?.isClosed == false) {
+                if(address!="" && address2!=""){
+                    routeCount += 1
+                    myFragment.submit(1)
+                    //val comm = view.findViewById<EditText>(R.id.comments).text.toString()
+                    val obId = ObjectId()
+
+                    syncedRealm?.executeTransaction { transact: Realm ->
+                        data = transact.createObject(Routes::class.java, obId)
+                        routes[routeCount - 1]._id = obId
+
+                        data?.origin = address
+                        routes[routeCount - 1].origin = address
+
+                        data?.destination = address2
+                        routes[routeCount - 1].destination = address2
+
+                        data?.depart = org
+                        data?.arrival = dest
+                        routes[routeCount - 1].depart = org
+                        routes[routeCount - 1].arrival = dest
+
+                        var transport = ""
+                        if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
+                            data?.publictransport = true
+                            transport += "p"
+                            routes[routeCount - 1].publictransport = true
+                        }
+                        if (view.findViewById<CheckBox>(R.id.checkBox2).isChecked) {
+                            data?.car = true
+                            transport += "c"
+                            routes[routeCount - 1].car = true
+                        }
+                        if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
+                            data?.walk = true
+                            transport += "w"
+                            routes[routeCount - 1].walk = true
+                        }
+                        var day = ""
+                        if (chip3.isChecked) day += (chip3.text.toString())
+                        if (chip4.isChecked) day += (chip4.text.toString())
+                        if (chip5.isChecked) day += (chip5.text.toString())
+                        if (chip6.isChecked) day += (chip6.text.toString())
+                        if (chip7.isChecked) day += (chip7.text.toString())
+                        if (chip8.isChecked) day += (chip8.text.toString())
+                        if (chip9.isChecked) day += (chip9.text.toString())
+                        data?.days = day
+                        //data?.comment = comm
+                        //routes[routeCount-1].comment = comm
+                        routes[routeCount - 1].days = day
+
+                        result[0] = address
+                        result[1] = address2
+                        result[2] = timedep.text.toString()
+                        result[3] = timearr.text.toString()
+                        result[4] = day
+                        result[5] = transport
+                        setFragmentResult(
+                            "directionsRequested",
+                            bundleOf("bundleKey" to result)
+                        )
+                    }
+                    activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                        routeCount-1, routeCount, "Ruta $routeCount")
+
+                    val task = syncedRealm!!.where(Routes::class.java)
+                        .equalTo("_id", routes[routeCount-1]._id).findFirst()
+                    Log.v("EXAMPLE", "Fetched object by primary key: $task")
+                }else {
+                    Toast.makeText(activity, "Aviso. No se han introducido datos sobre " +
+                            "origen y/o destino", Toast.LENGTH_SHORT).show()
+                }
+
+            } else {
+                Log.e("REALM error", "realm closed or wrong ref")
+                Toast.makeText(activity, "Error al guardar la ruta, revise " +
+                        "su conexión a internet", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+        }
+
         setFragmentResultListener("requestedAddrO") { _, bundle ->
             result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
             Log.d("RESULT", result.toString())
@@ -175,6 +310,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             timedep.setText(result[2])
             timearr.setText(result[3])
             days = result[4]
+            transp = result[5]
 
             if(days!=""){
                 for (i in days.indices){
@@ -188,6 +324,15 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         chip7.text -> chip7.isChecked = true
                         chip8.text -> chip8.isChecked = true
                         chip9.text -> chip9.isChecked = true
+                    }
+                }
+            }
+            if (transp != "") {
+                for (i in transp.indices) {
+                    when (transp[i].toString()) {
+                        "p" -> checkb1.isChecked = true
+                        "c" -> checkb2.isChecked = true
+                        "w" -> checkb3.isChecked = true
                     }
                 }
             }
@@ -208,6 +353,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             timedep.setText(result[2])
             timearr.setText(result[3])
             days = result[4]
+            transp = result[5]
 
             if(days!=""){
                 for (i in days.indices){
@@ -224,6 +370,15 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     }
                 }
             }
+            if (transp != "") {
+                for (i in transp.indices) {
+                    when (transp[i].toString()) {
+                        "p" -> checkb1.isChecked = true
+                        "c" -> checkb2.isChecked = true
+                        "w" -> checkb3.isChecked = true
+                    }
+                }
+            }
 
         }//Destination requested
 
@@ -237,17 +392,25 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(chip7.isChecked) days+=(chip7.text.toString())
             if(chip8.isChecked) days+=(chip8.text.toString())
             if(chip9.isChecked) days+=(chip9.text.toString())
+            transp=""
+            if (checkb1.isChecked) transp += "p"
+            if (checkb2.isChecked) transp += "c"
+            if (checkb3.isChecked) transp += "w"
 
             if(polyline == 1){ //Clear previous polyline
                 mMap.clear()
                 polyline=0
             }
             if(address != "" && address2 !=""){
+
+                Toast.makeText(activity, "Calculando ruta...",
+                    Toast.LENGTH_SHORT).show()
                 result[0] = address
                 result[1] = address2
                 result[2] = timedep.text.toString()
                 result[3] = timearr.text.toString()
                 result[4] = days
+                result[5] = transp
 
                 marker = mMap.addMarker(MarkerOptions().position(marker!!.position)
                     .draggable(true))
@@ -259,12 +422,20 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         bundleOf("bundleKey" to result)
                 )
                 //Route generation from the given points
+                var mode = "driving" //Defaults to driving as per api standard
+                if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
+                    mode="transit"
+                }
+                if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
+                    mode="walking"
+                }
+
                 val path: MutableList<List<LatLng>> = ArrayList()
                 val urlDirections = "https://maps.googleapis.com/maps/api/directions/json?origin="+
                         marker?.position?.latitude.toString()+","+marker?.position?.
                         longitude.toString()+"&destination="+
                         marker2?.position?.latitude.toString()+","+marker2?.position?.
-                        longitude.toString()+"&key="+
+                        longitude.toString()+"&mode=$mode"+"&key="+
                         GOOGLE_MAPS_API
 
                 val builder = LatLngBounds.Builder()
@@ -391,6 +562,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             val madrid = LatLng(40.416729, -3.703339)
             marker = mMap.addMarker(MarkerOptions().position(madrid).draggable(true))!!
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
+            clicked=1
         }
 
         autocompleteFragment!!.view!!.findViewById<View>(com.google.android.libraries.

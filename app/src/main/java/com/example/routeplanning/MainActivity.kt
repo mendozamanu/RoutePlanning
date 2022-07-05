@@ -1,6 +1,7 @@
 package com.example.routeplanning
 
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.CheckBox
@@ -24,7 +25,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var myFragment: FirstFragment
-    private lateinit var mitem: MenuItem
+    private var mitem: MenuItem? = null
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navView: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +36,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(binding.root)
 
         setSupportActionBar(binding.appBarMain.toolbar)
-        val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
+        drawerLayout = binding.drawerLayout
+        navView = binding.navView
 
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
@@ -60,7 +63,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             findNavController(R.id.nav_host_fragment_content_main)
                 .navigate(R.id.action_FirstFragment_to_SecondFragment)
             mitem = item
-            mitem.isVisible = false
+            mitem?.isVisible = false
         }
 
         return true
@@ -70,6 +73,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle item selection
         myFragment = FirstFragment() //binding.root is the view of the first fragment
+        drawerLayout.closeDrawers()
+        item.isChecked=false
+
+        Log.d("CHECKED", navView.menu.getItem(item.itemId+1).toString())
 
         binding.root.findViewById<TextView>(R.id.editTextTime)?.text = myFragment.
         getRoutes()[item.itemId].depart
@@ -117,7 +124,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onBackPressed() {
-        mitem.isVisible=true
+        if(mitem != null){
+            mitem?.isVisible=true
+        }
         super.onBackPressed()
     }
 }

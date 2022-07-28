@@ -9,6 +9,11 @@
     <string name="test_email">dailytechfan@gmail.com</string>
     <string name="test_password">PanCakes</string>
 
+    <string-array name="medios_de_transporte">
+        <item>Coche</item>
+        <item>Caminar</item>
+        <item>Transporte público</item>
+    </string-array>
 
     <string name="search">Buscar</string>
     <string name="destination">Destino</string>
@@ -22,16 +27,16 @@
     <string name="car">Coche</string>
     <string name="walk">Caminar</string>
     <string name="submit">Guardar</string>
-    <string name="means_of_transport_used">Medios de transporte empleados</string>
+    <string name="means_of_transport_used">Medio elegido</string>
     <string name="public_transport">Transporte público</string>
     <string name="hour">00:00</string>
     <string name="rutas">Rutas</string>
     <string name="reiniciar">Reiniciar</string>
     <string name="change_directions">Cambiar</string>
-    <string name="llegada">Llegada</string>
-    <string name="salida">Salida</string>
+    <string name="llegada">Fin</string>
+    <string name="salida">Inicio</string>
     <string name="dias">Días</string>
-    <string name="weekdays">Días laborables</string>
+    <string name="weekdays">Laborables</string>
     <string name="weekend">Fines de semana</string>
     <string name="l">L</string>
     <string name="m">M</string>

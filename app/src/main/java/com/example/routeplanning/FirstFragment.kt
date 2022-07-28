@@ -1,6 +1,7 @@
 package com.example.routeplanning
 
 import android.os.Bundle
+import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -31,6 +32,7 @@ import org.bson.types.ObjectId
 
 open class Routes(
     @PrimaryKey var _id: ObjectId? = ObjectId(),
+    var uid: String = "",
     var origin: String = "",
     var destination: String = "",
     var depart: String = "",
@@ -40,13 +42,14 @@ open class Routes(
     var walk: Boolean = false,
     var comment: String = "",
     var days: String = ""
+//uid: identif para almacenar y restaurar rutas del usuario en futuros usos de la app - deviceID
 
 ): RealmObject()
 
 var user: User? = null
 var syncedRealm: Realm? = null
 private var submitted = 0
-var routes = MutableList(5){Routes()} //Allowing max 5 routes at first
+var routes = MutableList(10){Routes()} //Allowing the first 10 routes
 var routeCount = 0
 
 /**
@@ -62,6 +65,7 @@ class FirstFragment : Fragment() {
     private var dest: EditText? = null
     private var days = ""
     private var transp = ""
+    private var androidId:String = ""
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -73,6 +77,11 @@ class FirstFragment : Fragment() {
     ): View {
 
         val view: View = inflater.inflate(R.layout.fragment_first, container, false)
+
+        androidId = Settings.Secure.getString(
+            context?.contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
 
         editOriginAdr = view.findViewById(R.id.originAddr)
         editDestAdr = view.findViewById(R.id.destAddr)
@@ -220,7 +229,8 @@ class FirstFragment : Fragment() {
                     editOriginAdr!!.text.toString(), editDestAdr!!.text.toString(),
                     org!!.text.toString(), dest!!.text.toString(), days, transp
                 )
-                setFragmentResult("requestedAddrO", bundleOf("bundledKey" to result))
+                setFragmentResult("requestedAddrO",
+                    bundleOf("bundledKey" to result))
                 Log.d("List", result.toString())
                 findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
                 val item = requireActivity().findViewById<ActionMenuItemView>(R.id.map)
@@ -247,7 +257,8 @@ class FirstFragment : Fragment() {
                     editOriginAdr!!.text.toString(), editDestAdr!!.text.toString(),
                     org!!.text.toString(), dest!!.text.toString(), days, transp
                 )
-                setFragmentResult("requestedAddrD", bundleOf("bundledKey" to result))
+                setFragmentResult("requestedAddrD",
+                    bundleOf("bundledKey" to result))
                 Log.d("List", result.toString())
                 findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
                 val item = requireActivity().findViewById<ActionMenuItemView>(R.id.map)
@@ -292,6 +303,25 @@ class FirstFragment : Fragment() {
                             synced = syncedRealm
                             Log.i("RealmOK", "Successfully connected " +
                                     "with realm $syncedRealm")
+                            val task = syncedRealm!!.where(Routes::class.java)
+                                .equalTo("uid", androidId).findAll()
+                            for (ruta in task){
+                                routeCount+=1
+                                activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                                    routeCount-1, routeCount,
+                                    "${ruta.origin} - ${ruta.destination}")
+                                routes[routeCount-1]._id = ruta._id
+                                routes[routeCount-1].uid = ruta.uid
+                                routes[routeCount-1].origin = ruta.origin
+                                routes[routeCount-1].destination = ruta.destination
+                                routes[routeCount-1].depart = ruta.depart
+                                routes[routeCount-1].arrival = ruta.arrival
+                                routes[routeCount-1].publictransport = ruta.publictransport
+                                routes[routeCount-1].car = ruta.car
+                                routes[routeCount-1].walk = ruta.walk
+                                routes[routeCount-1].comment = ruta.comment
+                                routes[routeCount-1].days = ruta.days
+                            }
                         }
                     })
 
@@ -303,12 +333,12 @@ class FirstFragment : Fragment() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-
             }
         }
         else{
             return synced
         }
+
         return synced
 
     }
@@ -316,6 +346,15 @@ class FirstFragment : Fragment() {
      override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+         if(syncedRealm!=null){
+             val task = syncedRealm!!.where(Routes::class.java)
+                 .equalTo("uid", androidId).findAll()
+             Log.v("EXAMPLE", "Fetched object by primary key: $task")
+
+         }
+         /*activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+             routeCount-1, routeCount, "Ruta $org - $dest")
+         */
          val sendButton: Button = view.findViewById(R.id.sendButton)
          val chip: Chip = view.findViewById(R.id.chip_1)
          val chip2: Chip = view.findViewById(R.id.chip_2)
@@ -329,7 +368,7 @@ class FirstFragment : Fragment() {
 
          chip.setOnClickListener {
              Log.i("WD", "Weekdays")
-             //If invoked when chip is "dechecked" the weekday chips are demarked too
+             //If invoked when chip is "unchecked" the weekday chips are unmarked too
              chip3.isChecked=chip.isChecked
              chip4.isChecked=chip.isChecked
              chip5.isChecked=chip.isChecked
@@ -358,8 +397,8 @@ class FirstFragment : Fragment() {
              //Before: data validation
              var data: Routes?
 
-             val org = view.findViewById<TextView>(R.id.editTextTime).text.toString()
-             val values: List<String> = org.split(":")
+             val org = view.findViewById<EditText>(R.id.editTextTime)
+             val values: List<String> = org.text.toString().split(":")
              if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
                  Log.i("Depart", "DEPART at: $org")
              } else {
@@ -370,8 +409,8 @@ class FirstFragment : Fragment() {
                  return@setOnClickListener
              }
 
-             val dest = view.findViewById<TextView>(R.id.editTextTime2).text.toString()
-             val values2: List<String> = dest.split(":")
+             val dest = view.findViewById<EditText>(R.id.editTextTime2)
+             val values2: List<String> = dest.text.toString().split(":")
              if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
                  Log.d("Debug1", "ARRIVE at: $dest")
              } else {
@@ -401,10 +440,12 @@ class FirstFragment : Fragment() {
                      data?.destination = editDestAdr?.text.toString()
                      routes[routeCount-1].destination = editDestAdr?.text.toString()
 
-                     data?.depart = org
-                     data?.arrival = dest
-                     routes[routeCount-1].depart = org
-                     routes[routeCount-1].arrival = dest
+                     data?.depart = org.text.toString()
+                     data?.arrival = dest.text.toString()
+                     routes[routeCount-1].depart = org.text.toString()
+                     routes[routeCount-1].arrival = dest.text.toString()
+
+                     data?.uid = androidId
 
                      if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
                          data?.publictransport = true
@@ -433,7 +474,8 @@ class FirstFragment : Fragment() {
 
                  }
                  activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
-                     routeCount-1, routeCount, "Ruta $routeCount")
+                     routeCount-1, routeCount,
+                     "${editOriginAdr?.text.toString()} - ${editDestAdr?.text.toString()}")
 
                  val task = syncedRealm!!.where(Routes::class.java)
                      .equalTo("_id", routes[routeCount-1]._id).findFirst()
@@ -450,22 +492,22 @@ class FirstFragment : Fragment() {
          val resetButton: Button = view.findViewById(R.id.resetButton)
 
          resetButton.setOnClickListener {
-             view.findViewById<TextView>(R.id.editTextTime)?.text = "00:00"
-             view.findViewById<TextView>(R.id.editTextTime2)?.text = "00:00"
+             org?.setText(R.string.hour)
+             dest?.setText(R.string.hour)
              view.findViewById<EditText>(R.id.originAddr)?.setText("")
              view.findViewById<EditText>(R.id.destAddr)?.setText("")
              view.findViewById<CheckBox>(R.id.checkBox)?.isChecked = false
              view.findViewById<CheckBox>(R.id.checkBox2)?.isChecked = false
              view.findViewById<CheckBox>(R.id.checkBox3)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_1)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_2)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_3)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_4)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_5)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_6)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_7)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_8)?.isChecked = false
-             view.findViewById<CheckBox>(R.id.chip_9)?.isChecked = false
+             chip.isChecked = false
+             chip2.isChecked = false
+             chip3.isChecked = false
+             chip4.isChecked = false
+             chip5.isChecked = false
+             chip6.isChecked = false
+             chip7.isChecked = false
+             chip8.isChecked = false
+             chip9.isChecked = false
              view.findViewById<EditText>(R.id.comments)?.setText("")
 
              submitted = 0

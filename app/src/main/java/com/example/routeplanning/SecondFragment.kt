@@ -8,6 +8,9 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
+import android.provider.Settings
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -66,7 +69,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private var polyline = 0
     private var autocompleteFragment : AutocompleteSupportFragment? = null
     private var autocompleteFragment2 : AutocompleteSupportFragment? = null
-
+    private var submitted = 0
+    private var checkb1 = false
+    private var checkb2 = false
+    private var checkb3 = false
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -111,7 +117,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
 
             override fun onError(status: Status) {
-                Log.i("TAG", "An error occurred: $status")
+                Log.e("TAG", "An error occurred: $status")
             }
         })
 
@@ -126,7 +132,48 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
 
             override fun onError(status: Status) {
-                Log.i("TAG", "An error occurred: $status")
+                Log.e("TAG", "An error occurred: $status")
+            }
+        })
+
+        val timedep = view.findViewById<EditText>(R.id.timeDepart)
+        val timearr = view.findViewById<EditText>(R.id.timeArrive)
+        val myFragment = FirstFragment() //binding.root is the view of the first fragment
+
+        timedep?.addTextChangedListener(object : TextWatcher {
+
+            override fun afterTextChanged(s: Editable) {
+                myFragment.submit(0)
+            }
+
+            override fun beforeTextChanged(
+                s: CharSequence, start: Int,
+                count: Int, after: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence, start: Int,
+                before: Int, count: Int
+            ) {
+            }
+        })
+        timearr?.addTextChangedListener(object : TextWatcher {
+
+            override fun afterTextChanged(s: Editable) {
+                myFragment.submit(0)
+            }
+
+            override fun beforeTextChanged(
+                s: CharSequence, start: Int,
+                count: Int, after: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence, start: Int,
+                before: Int, count: Int
+            ) {
             }
         })
 
@@ -134,12 +181,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        val timedep = view.findViewById<EditText>(R.id.timeDepart)
-        val timearr = view.findViewById<EditText>(R.id.timeArrive)
         var days:String
         var transp:String
         val chip: Chip = view.findViewById(R.id.chip_1)
-        val chip2: Chip = view.findViewById(R.id.chip_2)
         val chip3: Chip = view.findViewById(R.id.chip_3)
         val chip4: Chip = view.findViewById(R.id.chip_4)
         val chip5: Chip = view.findViewById(R.id.chip_5)
@@ -148,13 +192,42 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val chip8: Chip = view.findViewById(R.id.chip_8)
         val chip9: Chip = view.findViewById(R.id.chip_9)
 
-        val checkb1: CheckBox = view.findViewById(R.id.checkBox)
-        val checkb2: CheckBox = view.findViewById(R.id.checkBox2)
-        val checkb3: CheckBox = view.findViewById(R.id.checkBox3)
+        val spinner: Spinner = view.findViewById(R.id.spinner)
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parentView: AdapterView<*>?,
+                selectedItemView: View?,
+                position: Int,
+                id: Long
+            ) {
+                if(parentView?.getItemAtPosition(position).toString() == "Coche"){
+                    checkb1 = true
+                    checkb2 = false
+                    checkb3 = false
+                }
+                if(parentView?.getItemAtPosition(position).toString() == "Caminar"){
+                    checkb1 = false
+                    checkb2 = true
+                    checkb3 = false
+                }
+                if(parentView?.getItemAtPosition(position).toString() == "Transporte público"){
+                    checkb1 = false
+                    checkb2 = false
+                    checkb3 = true
+                }
+            }
+
+            override fun onNothingSelected(parentView: AdapterView<*>?) {
+                // your code here
+                checkb1=false
+                checkb2=false
+                checkb3=false
+            }
+        }
 
         chip.setOnClickListener {
 
-            //If invoked when chip is "dechecked" the weekday chips are demarked too
+            //If invoked when chip is "unchecked" the weekday chips are unmarked too
             chip3.isChecked=chip.isChecked
             chip4.isChecked=chip.isChecked
             chip5.isChecked=chip.isChecked
@@ -162,18 +235,11 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             chip7.isChecked=chip.isChecked
         }
 
-        chip2.setOnClickListener {
-
-            chip8.isChecked=chip2.isChecked
-            chip9.isChecked=chip2.isChecked
-        }
-
         val submit: Button = view.findViewById(R.id.save_button)
 
         submit.setOnClickListener{
-            val myFragment = FirstFragment() //binding.root is the view of the first fragment
             myFragment.loginToMongo()
-            val submitted = myFragment.submittedStatus()
+            submitted = myFragment.submittedStatus()
 
             Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
             Log.d("SUBMITTED status", submitted.toString())
@@ -187,7 +253,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             //Before: data validation
             var data: Routes?
 
-            val org = view.findViewById<TextView>(R.id.timeDepart).text.toString()
+            val org = timedep.text.toString()
             val values: List<String> = org.split(":")
             if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
                 Log.i("Depart", "DEPART at: $org")
@@ -199,7 +265,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 return@setOnClickListener
             }
 
-            val dest = view.findViewById<TextView>(R.id.timeArrive).text.toString()
+            val dest = timearr.text.toString()
             val values2: List<String> = dest.split(":")
             if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
                 Log.d("Debug1", "ARRIVE at: $dest")
@@ -236,18 +302,24 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         routes[routeCount - 1].depart = org
                         routes[routeCount - 1].arrival = dest
 
+                        val androidId = Settings.Secure.getString(
+                            context?.contentResolver,
+                            Settings.Secure.ANDROID_ID
+                        )
+                        data?.uid = androidId
+
                         var transport = ""
-                        if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
+                        if (checkb1) {
                             data?.publictransport = true
                             transport += "p"
                             routes[routeCount - 1].publictransport = true
                         }
-                        if (view.findViewById<CheckBox>(R.id.checkBox2).isChecked) {
+                        if (checkb2) {
                             data?.car = true
                             transport += "c"
                             routes[routeCount - 1].car = true
                         }
-                        if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
+                        if (checkb3) {
                             data?.walk = true
                             transport += "w"
                             routes[routeCount - 1].walk = true
@@ -277,7 +349,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         )
                     }
                     activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
-                        routeCount-1, routeCount, "Ruta $routeCount")
+                        routeCount-1, routeCount, "$address - $address2")
 
                     val task = syncedRealm!!.where(Routes::class.java)
                         .equalTo("_id", routes[routeCount-1]._id).findFirst()
@@ -315,8 +387,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(days!=""){
                 for (i in days.indices){
                     when(days[i].toString()){
-                        //chip.text -> chip.isChecked = true
-                        //chip2.text -> chip2.isChecked = true
                         chip3.text -> chip3.isChecked = true
                         chip4.text -> chip4.isChecked = true
                         chip5.text -> chip5.isChecked = true
@@ -330,9 +400,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if (transp != "") {
                 for (i in transp.indices) {
                     when (transp[i].toString()) {
-                        "p" -> checkb1.isChecked = true
-                        "c" -> checkb2.isChecked = true
-                        "w" -> checkb3.isChecked = true
+                        "p" -> checkb1 = true
+                        "c" -> checkb2 = true
+                        "w" -> checkb3 = true
                     }
                 }
             }
@@ -358,8 +428,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(days!=""){
                 for (i in days.indices){
                     when(days[i].toString()){
-                        //chip.text -> chip.isChecked = true
-                        //chip2.text -> chip2.isChecked = true
                         chip3.text -> chip3.isChecked = true
                         chip4.text -> chip4.isChecked = true
                         chip5.text -> chip5.isChecked = true
@@ -373,9 +441,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if (transp != "") {
                 for (i in transp.indices) {
                     when (transp[i].toString()) {
-                        "p" -> checkb1.isChecked = true
-                        "c" -> checkb2.isChecked = true
-                        "w" -> checkb3.isChecked = true
+                        "p" -> checkb1 = true
+                        "c" -> checkb2 = true
+                        "w" -> checkb3 = true
                     }
                 }
             }
@@ -393,9 +461,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(chip8.isChecked) days+=(chip8.text.toString())
             if(chip9.isChecked) days+=(chip9.text.toString())
             transp=""
-            if (checkb1.isChecked) transp += "p"
-            if (checkb2.isChecked) transp += "c"
-            if (checkb3.isChecked) transp += "w"
+            if (checkb1) transp += "p"
+            if (checkb2) transp += "c"
+            if (checkb3) transp += "w"
 
             if(polyline == 1){ //Clear previous polyline
                 mMap.clear()
@@ -423,10 +491,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 )
                 //Route generation from the given points
                 var mode = "driving" //Defaults to driving as per api standard
-                if (view.findViewById<CheckBox>(R.id.checkBox).isChecked) {
+                if (checkb3) {
                     mode="transit"
                 }
-                if (view.findViewById<CheckBox>(R.id.checkBox3).isChecked) {
+                if (checkb2) {
                     mode="walking"
                 }
 
@@ -565,7 +633,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             clicked=1
         }
 
-        autocompleteFragment!!.view!!.findViewById<View>(com.google.android.libraries.
+        autocompleteFragment!!.requireView().findViewById<View>(com.google.android.libraries.
         places.R.id.places_autocomplete_clear_button)
             .setOnClickListener {
                 autocompleteFragment!!.setText("")
@@ -577,7 +645,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 it.visibility = View.GONE
             }
 
-        autocompleteFragment2!!.view!!.findViewById<View>(com.google.android.libraries.
+        autocompleteFragment2!!.requireView().findViewById<View>(com.google.android.libraries.
         places.R.id.places_autocomplete_clear_button)
             .setOnClickListener {
                 autocompleteFragment2!!.setText("")

@@ -243,6 +243,11 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
             Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
             Log.d("SUBMITTED status", submitted.toString())
+            if(address == "" || address2 == ""){
+                Toast.makeText(activity, "No se han introducido direcciones de origen y/o " +
+                        "destino", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             if (submitted == 1) {
                 Toast.makeText(
                     activity, "Ruta ya confirmada",
@@ -277,11 +282,11 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 return@setOnClickListener
             }
 
-            Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
             //submit = 1
             Log.i("Status", "Synced realm: $syncedRealm")
             if (syncedRealm?.isClosed == false) {
                 if(address!="" && address2!=""){
+                    Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
                     routeCount += 1
                     myFragment.submit(1)
                     //val comm = view.findViewById<EditText>(R.id.comments).text.toString()

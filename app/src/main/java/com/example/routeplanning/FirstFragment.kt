@@ -387,6 +387,11 @@ class FirstFragment : Fragment() {
              //MongoDB connected and send data
              Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
              Log.d("SUBMITTED status", submitted.toString())
+             if(editOriginAdr!!.text.toString() == "" || editDestAdr!!.text.toString() == ""){
+                 Toast.makeText(activity, "No se han introducido direcciones de origen y/o " +
+                         "destino", Toast.LENGTH_SHORT).show()
+                 return@setOnClickListener
+             }
              if (submitted == 1) {
                  Toast.makeText(
                      activity, "Ruta ya confirmada",

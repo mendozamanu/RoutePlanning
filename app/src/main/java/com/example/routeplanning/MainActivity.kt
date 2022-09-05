@@ -72,9 +72,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle item selection
+        val size: Int = navView.menu.size()
+        for (i in 0 until size) {
+            navView.menu.getItem(i).isChecked = false
+        } //uncheck all the items so that only 1 item is checked at a time
         myFragment = FirstFragment() //binding.root is the view of the first fragment
         drawerLayout.closeDrawers()
-        item.isChecked=false
+        item.isChecked=true
 
         Log.d("CHECKED", navView.menu.getItem(item.itemId+1).toString())
 

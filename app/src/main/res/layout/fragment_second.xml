@@ -115,6 +115,7 @@
         android:autofillHints=""
         android:ems="10"
         android:hint="@string/hour"
+        android:text="@string/hour"
         android:inputType="time"
         app:layout_constraintStart_toEndOf="@+id/cardView"
         app:layout_constraintTop_toTopOf="parent" />
@@ -128,6 +129,7 @@
         android:autofillHints=""
         android:ems="10"
         android:hint="@string/hour"
+        android:text="@string/hour"
         android:inputType="time"
         app:layout_constraintStart_toEndOf="@+id/cardView3"
         app:layout_constraintTop_toBottomOf="@+id/timeDepart" />

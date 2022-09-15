@@ -158,6 +158,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             ) {
             }
         })
+
         timearr?.addTextChangedListener(object : TextWatcher {
 
             override fun afterTextChanged(s: Editable) {
@@ -600,7 +601,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     // May throw an IOException
                     marker?.remove()
                     val addr = geocoder.getFromLocationName(result[0], 1)
-                    Log.d("ADDR", addr[0].toString())
+                    Log.d("ADDRESS", addr[0].toString())
                     val location: Address = addr[0]
                     val p1 = LatLng(location.latitude, location.longitude)
                     marker = mMap.addMarker(MarkerOptions().position(p1)
@@ -610,7 +611,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 if(result[1]!=""){
                     marker2?.remove()
                     val addr = geocoder.getFromLocationName(result[1], 1)
-                    Log.d("ADDR", addr[0].toString())
+                    Log.d("ADDRESS", addr[0].toString())
                     val location: Address = addr[0]
                     val p2 = LatLng(location.latitude, location.longitude)
                     marker2 = mMap.addMarker(MarkerOptions().position(p2)

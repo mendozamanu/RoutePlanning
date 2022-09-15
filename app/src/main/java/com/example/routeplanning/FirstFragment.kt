@@ -352,9 +352,6 @@ class FirstFragment : Fragment() {
              Log.v("EXAMPLE", "Fetched object by primary key: $task")
 
          }
-         /*activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
-             routeCount-1, routeCount, "Ruta $org - $dest")
-         */
          val sendButton: Button = view.findViewById(R.id.sendButton)
          val chip: Chip = view.findViewById(R.id.chip_1)
          val chip2: Chip = view.findViewById(R.id.chip_2)
@@ -381,7 +378,6 @@ class FirstFragment : Fragment() {
              chip8.isChecked=chip2.isChecked
              chip9.isChecked=chip2.isChecked
          }
-
 
          sendButton.setOnClickListener {
              //MongoDB connected and send data
@@ -417,7 +413,7 @@ class FirstFragment : Fragment() {
              val dest = view.findViewById<EditText>(R.id.editTextTime2)
              val values2: List<String> = dest.text.toString().split(":")
              if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
-                 Log.d("Debug1", "ARRIVE at: $dest")
+                 Log.d("Arrive", "ARRIVE at: $dest")
              } else {
                  Toast.makeText(
                      activity, "Error en la fecha, compruebe que la hora es correcta" +

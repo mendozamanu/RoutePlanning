@@ -22,13 +22,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
-import androidx.fragment.app.setFragmentResultListener
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.routeplanning.BuildConfig.GOOGLE_MAPS_API
 import com.example.routeplanning.databinding.FragmentSecondBinding
 import com.google.android.gms.common.api.Status
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -43,14 +43,41 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.maps.android.PolyUtil
 import io.realm.Realm
+import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
+import io.realm.mongodb.App
+import io.realm.mongodb.AppConfiguration
+import io.realm.mongodb.Credentials
+import io.realm.mongodb.User
+import io.realm.mongodb.sync.SyncConfiguration
 import org.bson.types.ObjectId
 import org.json.JSONObject
 import java.io.IOException
 
 
 /**
- * A simple [Fragment] subclass as the second destination in the navigation.
+ * A simple [Fragment] subclass as the destination in the navigation.
  */
+
+open class Routes(
+    @PrimaryKey var _id: ObjectId? = ObjectId(),
+    var uid: String = "",
+    var origin: String = "",
+    var destination: String = "",
+    var depart: String = "",
+    var arrival: String = "",
+    var publictransport: Boolean = false,
+    var car: Boolean = false,
+    var walk: Boolean = false,
+    var days: String = ""
+//uid: identif para almacenar y restaurar rutas del usuario en futuros usos de la app - deviceID
+
+): RealmObject()
+
+var routes = MutableList(10){Routes()} //Allowing the first 10 routes
+var routeCount = 0
+var user: User? = null
+var syncedRealm: Realm? = null
 
 
 class SecondFragment: Fragment(), OnMapReadyCallback,
@@ -73,6 +100,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private var checkb1 = false
     private var checkb2 = false
     private var checkb3 = false
+    private var androidId:String = ""
+
+    private var geocoder:Geocoder? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -83,7 +113,25 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         savedInstanceState: Bundle?
     ): View {
 
+        if (ContextCompat.checkSelfPermission(requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Log.i("Loc", "Location ok")
+        } else {
+            Toast.makeText(activity, "Acepta los permisos de localización para " +
+                    "poder guardar tu ubicación actual", Toast.LENGTH_LONG).show()
+            ActivityCompat.requestPermissions(
+                requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                100)
+        }
+
+        geocoder = Geocoder(requireActivity())
+
         val view: View = inflater.inflate(R.layout.fragment_second, container, false)
+
+         androidId = Settings.Secure.getString(
+            context?.contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
 
         Places.initialize(requireActivity(), GOOGLE_MAPS_API)
 
@@ -138,12 +186,11 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         val timedep = view.findViewById<EditText>(R.id.timeDepart)
         val timearr = view.findViewById<EditText>(R.id.timeArrive)
-        val myFragment = FirstFragment() //binding.root is the view of the first fragment
 
         timedep?.addTextChangedListener(object : TextWatcher {
 
             override fun afterTextChanged(s: Editable) {
-                myFragment.submit(0)
+                submitted=0
             }
 
             override fun beforeTextChanged(
@@ -162,7 +209,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         timearr?.addTextChangedListener(object : TextWatcher {
 
             override fun afterTextChanged(s: Editable) {
-                myFragment.submit(0)
+                submitted=0
             }
 
             override fun beforeTextChanged(
@@ -219,7 +266,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
 
             override fun onNothingSelected(parentView: AdapterView<*>?) {
-                // your code here
                 checkb1=false
                 checkb2=false
                 checkb3=false
@@ -239,8 +285,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val submit: Button = view.findViewById(R.id.save_button)
 
         submit.setOnClickListener{
-            myFragment.loginToMongo()
-            submitted = myFragment.submittedStatus()
+            loginToMongo()
 
             Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
             Log.d("SUBMITTED status", submitted.toString())
@@ -289,7 +334,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 if(address!="" && address2!=""){
                     Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
                     routeCount += 1
-                    myFragment.submit(1)
                     //val comm = view.findViewById<EditText>(R.id.comments).text.toString()
                     val obId = ObjectId()
 
@@ -308,10 +352,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         routes[routeCount - 1].depart = org
                         routes[routeCount - 1].arrival = dest
 
-                        val androidId = Settings.Secure.getString(
-                            context?.contentResolver,
-                            Settings.Secure.ANDROID_ID
-                        )
                         data?.uid = androidId
 
                         var transport = ""
@@ -354,6 +394,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                             bundleOf("bundleKey" to result)
                         )
                     }
+                    submitted=1
                     activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
                         routeCount-1, routeCount, "$address - $address2")
 
@@ -373,88 +414,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
 
         }
-
-        setFragmentResultListener("requestedAddrO") { _, bundle ->
-            result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
-            Log.d("RESULT", result.toString())
-            address = result[0]
-            address2 = result[1]
-            if(result[0]!="") {
-                autocompleteFragment!!.setText(result[0])
-            }
-            if(result[1]!="") {
-                autocompleteFragment2!!.setText(result[1])
-            }
-            timedep.setText(result[2])
-            timearr.setText(result[3])
-            days = result[4]
-            transp = result[5]
-
-            if(days!=""){
-                for (i in days.indices){
-                    when(days[i].toString()){
-                        chip3.text -> chip3.isChecked = true
-                        chip4.text -> chip4.isChecked = true
-                        chip5.text -> chip5.isChecked = true
-                        chip6.text -> chip6.isChecked = true
-                        chip7.text -> chip7.isChecked = true
-                        chip8.text -> chip8.isChecked = true
-                        chip9.text -> chip9.isChecked = true
-                    }
-                }
-            }
-            if (transp != "") {
-                for (i in transp.indices) {
-                    when (transp[i].toString()) {
-                        "p" -> checkb1 = true
-                        "c" -> checkb2 = true
-                        "w" -> checkb3 = true
-                    }
-                }
-            }
-
-        }//Origin requested
-
-        setFragmentResultListener("requestedAddrD") { _, bundle ->
-            result = bundle.getStringArrayList("bundledKey") as ArrayList<String>
-            Log.d("RESULT", result.toString())
-            address = result[0]
-            address2 = result[1]
-            if(result[0]!="") {
-                autocompleteFragment!!.setText(result[0])
-            }
-            if(result[1]!="") {
-                autocompleteFragment2!!.setText(result[1])
-            }
-            timedep.setText(result[2])
-            timearr.setText(result[3])
-            days = result[4]
-            transp = result[5]
-
-            if(days!=""){
-                for (i in days.indices){
-                    when(days[i].toString()){
-                        chip3.text -> chip3.isChecked = true
-                        chip4.text -> chip4.isChecked = true
-                        chip5.text -> chip5.isChecked = true
-                        chip6.text -> chip6.isChecked = true
-                        chip7.text -> chip7.isChecked = true
-                        chip8.text -> chip8.isChecked = true
-                        chip9.text -> chip9.isChecked = true
-                    }
-                }
-            }
-            if (transp != "") {
-                for (i in transp.indices) {
-                    when (transp[i].toString()) {
-                        "p" -> checkb1 = true
-                        "c" -> checkb2 = true
-                        "w" -> checkb3 = true
-                    }
-                }
-            }
-
-        }//Destination requested
 
         val secondButton: FloatingActionButton = view.findViewById(R.id.buttonSecond)
         secondButton.setOnClickListener {
@@ -504,6 +463,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     mode="walking"
                 }
 
+                //https://developers.google.com/maps/documentation/directions/get-directions
                 val path: MutableList<List<LatLng>> = ArrayList()
                 val urlDirections = "https://maps.googleapis.com/maps/api/directions/json?origin="+
                         marker?.position?.latitude.toString()+","+marker?.position?.
@@ -511,6 +471,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         marker2?.position?.latitude.toString()+","+marker2?.position?.
                         longitude.toString()+"&mode=$mode"+"&key="+
                         GOOGLE_MAPS_API
+                    //+departure_time or arrival_time according to the user preference
 
                 val builder = LatLngBounds.Builder()
                 builder.include(marker!!.position)
@@ -563,7 +524,80 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             autocompleteFragment!!.setText(address)
             autocompleteFragment2!!.setText(address2)
         }
+        loginToMongo()
         return view
+
+    }
+
+    private fun loginToMongo(): Realm?{
+
+        var synced = syncedRealm
+        if (syncedRealm == null) { //not logged in
+            context?.let { Realm.init(it) }
+            val appID = getString(R.string.app_id)
+            val app = App(
+                AppConfiguration.Builder(appID)
+                    .build()
+            )
+
+            val emailPasswordCredentials: Credentials = Credentials.emailPassword(
+                getString(R.string.test_email), getString(R.string.test_password)
+            )
+
+            app.loginAsync(emailPasswordCredentials) {
+                if (it.isSuccess) {
+                    Log.i("LoginOK", "Successfully authenticated with test user")
+                    user = app.currentUser()
+                    val partitionValue = "Routes"
+                    val config = SyncConfiguration.Builder(user!!, partitionValue)
+                        .allowQueriesOnUiThread(true)
+                        .allowWritesOnUiThread(true)
+                        .build()
+                    //var realm: Realm
+                    Realm.getInstanceAsync(config, object : Realm.Callback() {
+                        override fun onSuccess(_realm: Realm) {
+                            // the realm should live exactly as long as the activity, so assign
+                            // the realm to a member variable
+                            syncedRealm = _realm
+                            synced = syncedRealm
+                            Log.i("RealmOK", "Successfully connected " +
+                                    "with realm $syncedRealm")
+                            val task = syncedRealm!!.where(Routes::class.java)
+                                .equalTo("uid", androidId).findAll()
+                            for (ruta in task){
+                                routeCount+=1
+                                activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                                    routeCount-1, routeCount,
+                                    "${ruta.origin} - ${ruta.destination}")
+                                routes[routeCount-1]._id = ruta._id
+                                routes[routeCount-1].uid = ruta.uid
+                                routes[routeCount-1].origin = ruta.origin
+                                routes[routeCount-1].destination = ruta.destination
+                                routes[routeCount-1].depart = ruta.depart
+                                routes[routeCount-1].arrival = ruta.arrival
+                                routes[routeCount-1].publictransport = ruta.publictransport
+                                routes[routeCount-1].car = ruta.car
+                                routes[routeCount-1].walk = ruta.walk
+                                routes[routeCount-1].days = ruta.days
+                            }
+                        }
+                    })
+
+                } else {
+                    Toast.makeText(
+                        activity,
+                        "Error de autenticación en MongoDB Realm. Inténtelo de nuevo o " +
+                                "revise su conexión a internet",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+        else{
+            return synced
+        }
+
+        return synced
 
     }
 
@@ -573,6 +607,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
         mMap.setOnMarkerDragListener(this)
+        mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
 
         if (ContextCompat.checkSelfPermission(requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -592,16 +627,15 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         Log.d("Addr", address)
         if(address != "") {
-            val geocoder = Geocoder(requireActivity())
-            val builder = LatLngBounds.Builder()
             Log.d("RESULT", result.toString())
 
             try {
+                val builder = LatLngBounds.Builder()
                 if(result[0]!="") {
                     // May throw an IOException
                     marker?.remove()
-                    val addr = geocoder.getFromLocationName(result[0], 1)
-                    Log.d("ADDRESS", addr[0].toString())
+                    val addr = geocoder?.getFromLocationName(result[0], 1)
+                    Log.d("ADDRESS", addr!![0].toString())
                     val location: Address = addr[0]
                     val p1 = LatLng(location.latitude, location.longitude)
                     marker = mMap.addMarker(MarkerOptions().position(p1)
@@ -610,8 +644,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 }
                 if(result[1]!=""){
                     marker2?.remove()
-                    val addr = geocoder.getFromLocationName(result[1], 1)
-                    Log.d("ADDRESS", addr[0].toString())
+                    val addr = geocoder?.getFromLocationName(result[1], 1)
+                    Log.d("ADDRESS", addr!![0].toString())
                     val location: Address = addr[0]
                     val p2 = LatLng(location.latitude, location.longitude)
                     marker2 = mMap.addMarker(MarkerOptions().position(p2)
@@ -632,11 +666,13 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         }
         else{
+            if(!onMyLocationButtonClick()){
             //Default map location
             val madrid = LatLng(40.416729, -3.703339)
-            marker = mMap.addMarker(MarkerOptions().position(madrid).draggable(true))!!
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 15.0F))
-            clicked=1
+            //marker = mMap.addMarker(MarkerOptions().position(madrid).draggable(true))!!
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 10.0F))
+            //clicked=1
+            } //if the user is located, the map is updated to the user's current position
         }
 
         autocompleteFragment!!.requireView().findViewById<View>(com.google.android.libraries.
@@ -731,10 +767,23 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     override fun onMarkerDragStart(p0: Marker) {
     }
 
+    @SuppressLint("MissingPermission")
     override fun onMyLocationButtonClick(): Boolean {
         //Sets the map to the position of the user
-        Toast.makeText(activity, "Obteniendo tu posición...", Toast.LENGTH_SHORT).show()
-        return false //the default behavior should still occur
+        var retn = false
+        val mFusedLocationClient = LocationServices.
+            getFusedLocationProviderClient(requireActivity())
+        mFusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
+            val location: Location? = task.result
+            retn = if (location == null) {
+                false
+            } else{
+                val curr = LatLng(location.latitude, location.longitude)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(curr, 15.0F))
+                true
+            }
+        }
+        return retn //the default behavior should still occur
     }
 
     override fun onMyLocationClick(p0: Location) {
@@ -751,7 +800,38 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     private fun getAddress(lat: Double, lng: Double): String { //Get text address from LatLng data
         val geocoder = Geocoder(requireActivity())
         val list = geocoder.getFromLocation(lat, lng, 1)
-        return list[0].getAddressLine(0)
+        return list!![0].getAddressLine(0)
+    }
+
+    fun getRoutes():MutableList<Routes> {
+        return routes
+    }
+
+    fun fillText(frag: Int, t: String){
+
+        if(frag==1 && autocompleteFragment!=null){
+            autocompleteFragment!!.setText(t)
+            Log.i("Origin", t)
+            address = t
+            marker?.remove()
+            val addr = geocoder?.getFromLocationName(t, 1)
+            val location: Address = addr!![0]
+            val p1 = LatLng(location.latitude, location.longitude)
+            marker = mMap.addMarker(MarkerOptions().position(p1)
+                .draggable(true))!!
+        }
+        if(frag==2 && autocompleteFragment2!=null){
+            autocompleteFragment2!!.setText(t)
+            Log.i("Destination", t)
+            address2 = t
+            marker2?.remove()
+            val addr = geocoder?.getFromLocationName(t, 1)
+            val location: Address = addr!![0]
+            val p1 = LatLng(location.latitude, location.longitude)
+            marker2 = mMap.addMarker(MarkerOptions().position(p1)
+                .draggable(true))!!
+        }
     }
 
 }
+

@@ -11,8 +11,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.os.bundleOf
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -80,6 +82,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle item selection
         val size: Int = navView.menu.size()
+        Log.d("Size menu: ", size.toString())
         for (i in 0 until size) {
             navView.menu.getItem(i).isChecked = false
         } //uncheck all the items so that only 1 item is checked at a time
@@ -88,6 +91,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         myFragment = myFragment as SecondFragment
 
         Log.d("CHECKED", navView.menu.getItem(item.itemId+1).toString())
+        (myFragment as SecondFragment).setFragmentResult(
+            "itemListDirections",
+            bundleOf("bundleKey" to navView.menu.getItem(item.itemId+1).toString())
+        )
 
         (myFragment as SecondFragment).fillText(1,
             (myFragment as SecondFragment).getRoutes()[item.itemId].origin)
@@ -108,7 +115,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if((myFragment as SecondFragment).getRoutes()[item.itemId].publictransport){
             binding.root.findViewById<Spinner>(R.id.spinner)?.setSelection(2)
         }
-
+        if((myFragment as SecondFragment).getRoutes()[item.itemId].days.contains("LMXJV")){
+            binding.root.findViewById<Chip>(R.id.chip_1)?.isChecked=true
+        }
         for (i in (myFragment as SecondFragment).getRoutes()[item.itemId].days.indices){
                 when((myFragment as SecondFragment).getRoutes()[item.itemId].days[i].toString()){
                     binding.root.findViewById<Chip>(R.id.chip_3)?.text -> binding.root.
@@ -155,8 +164,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun requestPermissions() {
         ActivityCompat.requestPermissions(
             this,
-            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
-            42
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION), 42
         )
     }
 

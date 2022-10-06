@@ -2,13 +2,18 @@ package com.example.routeplanning
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
+import android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -22,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -108,11 +114,25 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     // onDestroyView.
     //private val binding get() = _binding!!
 
+    @SuppressLint("HardwareIds")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
+        val lm = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        try {
+            val enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            if(!enabled){
+                Toast.makeText(activity, "Activa la ubicación para un uso óptimo " +
+                        "de la aplicación", Toast.LENGTH_SHORT).show()
+                val intent = Intent(ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent) //if gps is off we request the user to activate it
+            }
+        }
+        catch (ex: java.lang.Exception) { }
+
+        //REQUEST LOCATION PERMISSIONS
         if (ContextCompat.checkSelfPermission(requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.i("Loc", "Location ok")
@@ -124,6 +144,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 100)
         }
 
+        //initialize Geocoder and Places API
         geocoder = Geocoder(requireActivity())
 
         val view: View = inflater.inflate(R.layout.fragment_second, container, false)
@@ -184,6 +205,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
         })
 
+        //Check text changes in order to allow submission/edition of a route
         val timedep = view.findViewById<EditText>(R.id.timeDepart)
         val timearr = view.findViewById<EditText>(R.id.timeArrive)
 
@@ -191,6 +213,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
             override fun afterTextChanged(s: Editable) {
                 submitted=0
+                Log.i("SUB", "0")
             }
 
             override fun beforeTextChanged(
@@ -210,6 +233,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
             override fun afterTextChanged(s: Editable) {
                 submitted=0
+                Log.i("SUB", "0")
             }
 
             override fun beforeTextChanged(
@@ -240,6 +264,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         val chip8: Chip = view.findViewById(R.id.chip_8)
         val chip9: Chip = view.findViewById(R.id.chip_9)
 
+        //Mean of transport selection with a spinner view
         val spinner: Spinner = view.findViewById(R.id.spinner)
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -284,6 +309,153 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         val submit: Button = view.findViewById(R.id.save_button)
 
+        val edit: Button = view.findViewById(R.id.edit)
+
+        val delete: Button = view.findViewById(R.id.delete)
+
+        var itemI = "" //Get information of the selected route
+
+        setFragmentResultListener("itemListDirections") { _, bundle ->
+            val items = bundle.getString("bundleKey")
+            itemI = items!!
+        }
+
+        //Delete button functionality
+        delete.setOnClickListener{
+            val builder = AlertDialog.Builder(requireContext())
+            builder.setMessage("¿Seguro que quieres borrar la ruta?")
+                .setCancelable(false)
+                .setPositiveButton("Sí") { _, _ ->
+                    // Delete selected route from database
+                    val addresses = itemI.split(" - ")
+                    if(address != "" && address2 != ""){
+                        if (syncedRealm?.isClosed == false) {
+                            syncedRealm?.executeTransaction { bRealm ->
+                                val result = bRealm.where(Routes::class.java)
+                                    .equalTo("uid", androidId).findAll()
+                                Log.i("Result", result.toString())
+                                var i = 0
+                                for (route in result){
+                                    if(addresses[0] == route.origin && addresses[1] ==
+                                        route.destination) {
+                                        Log.i(
+                                            "TIMES", "${route.arrival}-${timearr.text} " +
+                                                    ",, "+"${route.depart}-${timedep.text}"
+                                        )
+                                        if (route.arrival == timearr.text.toString() &&
+                                            route.depart == timedep.text.toString()
+                                        )
+                                        route.deleteFromRealm()
+                                        activity?.findViewById<NavigationView>(R.id.nav_view)?.
+                                        menu?.removeGroup(1)
+                                        Log.i("Routes", routes.toString())
+                                        routes.removeAt(i)
+                                        Log.i("Routes-deleted", routes.toString())
+                                        routeCount=0
+                                        populateMenu(syncedRealm!!)
+                                    }
+                                    i+=1
+                                }
+                            }
+                            //Clear the form
+                            autocompleteFragment!!.requireView().findViewById<View>(com.
+                            google.android.libraries.
+                            places.R.id.places_autocomplete_clear_button).performClick()
+
+                            autocompleteFragment2!!.requireView().findViewById<View>(com.
+                            google.android.libraries.
+                            places.R.id.places_autocomplete_clear_button).performClick()
+
+                            Toast.makeText(activity, "Ruta eliminada", Toast.
+                            LENGTH_SHORT).show()
+                            clicked=0
+                        }
+                    }
+                    else{
+                        Toast.makeText(activity, "Error al eliminar, compruebe que ha " +
+                                "seleccionado una ruta válida", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("No") { dialog, _ ->
+                    // Dismiss the dialog
+                    dialog.dismiss()
+                }
+            val alert = builder.create()
+            alert.show()
+        }
+
+        //Edit button functionality
+        edit.setOnClickListener{
+            loginToMongo()
+
+            val addresses = itemI.split(" - ")
+            Log.i("ITEM", addresses.toString())
+
+            Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
+            if(address != "" && address2 != ""){
+                if (syncedRealm?.isClosed == false) {
+                    syncedRealm?.executeTransaction { bRealm ->
+                    val result = bRealm.where(Routes::class.java)
+                        .equalTo("uid", androidId).findAll()
+                    var i = 0
+                        for (route in result){
+                            if(route.origin == addresses[0] ||
+                                route.destination == addresses[1])
+                            {
+                                route.origin = address //update mongodb realm
+                                routes[i].origin = address //update local db
+                                route.destination = address2
+                                routes[i].destination = address2
+                                route.depart = timedep.text.toString()
+                                routes[i].depart = timedep.text.toString()
+                                route.arrival = timearr.text.toString()
+                                routes[i].arrival = timearr.text.toString()
+                                var day = ""
+                                if (chip3.isChecked) day += (chip3.text.toString())
+                                if (chip4.isChecked) day += (chip4.text.toString())
+                                if (chip5.isChecked) day += (chip5.text.toString())
+                                if (chip6.isChecked) day += (chip6.text.toString())
+                                if (chip7.isChecked) day += (chip7.text.toString())
+                                if (chip8.isChecked) day += (chip8.text.toString())
+                                if (chip9.isChecked) day += (chip9.text.toString())
+                                route.days = day
+                                routes[i].days = day
+                                if (checkb1) {
+                                    route.car = true
+                                    route.walk = false
+                                    route.publictransport = false
+                                }
+                                if (checkb2) {
+                                    route.car = false
+                                    route.walk = true
+                                    route.publictransport = false
+                                }
+                                if (checkb3) {
+                                    route.car = false
+                                    route.walk = false
+                                    route.publictransport = true
+                                }
+                                routes[i].publictransport = route.publictransport
+                                routes[i].walk = route.walk
+                                routes[i].car = route.car
+                            }
+                            i+=1
+                        }
+                        Log.i("RealmOK", "Results $result")
+                        Toast.makeText(activity, "Cambios realizados correctamente ",
+                            Toast.LENGTH_SHORT).show()
+                        submitted=1
+                    }
+                }
+            }
+            else{
+                Toast.makeText(activity, "No se han guardado los cambios, compruebe " +
+                        "las modificaciones", Toast.LENGTH_SHORT).show()
+            }
+
+        }
+
+        //Submit button functionality
         submit.setOnClickListener{
             loginToMongo()
 
@@ -301,120 +473,244 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 ).show()
                 return@setOnClickListener
             }
-            //Before: data validation
-            var data: Routes?
+            if(itemI!=""){
+                val addresses = itemI.split(" - ")
+                if(address == addresses[0] || address2 == addresses[1]){
+                    val builder = AlertDialog.Builder(requireContext())
+                    builder.setMessage("Ruta ya confirmada anteriormente. " +
+                            "¿Quizás querías editarla?")
+                        .setCancelable(false)
+                        .setPositiveButton("Sí") { _, _ ->
+                            edit.performClick()
+                            submitted = 1
+                        }
+                        .setNegativeButton("No, guardar igualmente"){_,_ ->
+                            var data: Routes?
 
-            val org = timedep.text.toString()
-            val values: List<String> = org.split(":")
-            if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
-                Log.i("Depart", "DEPART at: $org")
-            } else {
-                Toast.makeText(
-                    activity, "Error en la fecha, compruebe que la hora es correcta" +
-                            " XX:XX", Toast.LENGTH_LONG
-                ).show()
-                return@setOnClickListener
+                            val org = timedep.text.toString()
+                            val values: List<String> = org.split(":")
+                            if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
+                                Log.i("Depart", "DEPART at: $org")
+                            } else {
+                                Toast.makeText(
+                                    activity, "Error en la fecha, compruebe que la hora es correcta" +
+                                            " XX:XX", Toast.LENGTH_LONG
+                                ).show()
+                                return@setNegativeButton
+                            }
+
+                            val dest = timearr.text.toString()
+                            val values2: List<String> = dest.split(":")
+                            if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
+                                Log.d("Debug1", "ARRIVE at: $dest")
+                            } else {
+                                Toast.makeText(
+                                    activity, "Error en la fecha, compruebe que la hora es correcta" +
+                                            " XX:XX", Toast.LENGTH_LONG
+                                ).show()
+                                return@setNegativeButton
+                            }
+
+                            //submit = 1
+                            Log.i("Status", "Synced realm: $syncedRealm")
+                            if (syncedRealm?.isClosed == false) {
+                                if(address!="" && address2!=""){
+                                    Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
+                                    routeCount += 1
+                                    //val comm = view.findViewById<EditText>(R.id.comments).text.toString()
+                                    val obId = ObjectId()
+
+                                    syncedRealm?.executeTransaction { transact: Realm ->
+                                        data = transact.createObject(Routes::class.java, obId)
+                                        routes[routeCount - 1]._id = obId
+
+                                        data?.origin = address
+                                        routes[routeCount - 1].origin = address
+
+                                        data?.destination = address2
+                                        routes[routeCount - 1].destination = address2
+
+                                        data?.depart = org
+                                        data?.arrival = dest
+                                        routes[routeCount - 1].depart = org
+                                        routes[routeCount - 1].arrival = dest
+
+                                        data?.uid = androidId
+
+                                        if (checkb1) {
+                                            data?.car = true
+                                            routes[routeCount - 1].car = true
+                                        }
+                                        if (checkb2) {
+                                            data?.walk = true
+                                            routes[routeCount - 1].walk = true
+                                        }
+                                        if (checkb3) {
+                                            data?.publictransport = true
+                                            routes[routeCount - 1].publictransport = true
+                                        }
+                                        var day = ""
+                                        if (chip3.isChecked) day += (chip3.text.toString())
+                                        if (chip4.isChecked) day += (chip4.text.toString())
+                                        if (chip5.isChecked) day += (chip5.text.toString())
+                                        if (chip6.isChecked) day += (chip6.text.toString())
+                                        if (chip7.isChecked) day += (chip7.text.toString())
+                                        if (chip8.isChecked) day += (chip8.text.toString())
+                                        if (chip9.isChecked) day += (chip9.text.toString())
+                                        data?.days = day
+                                        //data?.comment = comm
+                                        //routes[routeCount-1].comment = comm
+                                        routes[routeCount - 1].days = day
+
+                                        result[0] = address
+                                        result[1] = address2
+                                        result[2] = timedep.text.toString()
+                                        result[3] = timearr.text.toString()
+                                        result[4] = day
+                                        //result[5] = transport
+                                        /*setFragmentResult(
+                                            "directionsRequested",
+                                            bundleOf("bundleKey" to result)
+                                        )*/
+                                    }
+                                    submitted=1
+                                    activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                                        routeCount-1, routeCount, "$address - $address2")
+
+                                    val task = syncedRealm!!.where(Routes::class.java)
+                                        .equalTo("_id", routes[routeCount-1]._id).findFirst()
+                                    Log.v("EXAMPLE", "Fetched object by primary key: $task")
+                                }else {
+                                    Toast.makeText(activity, "Aviso. No se han introducido datos sobre " +
+                                            "origen y/o destino", Toast.LENGTH_SHORT).show()
+                                }
+
+                            } else {
+                                Log.e("REALM error", "realm closed or wrong ref")
+                                Toast.makeText(activity, "Error al guardar la ruta, revise " +
+                                        "su conexión a internet", Toast.LENGTH_SHORT).show()
+                                return@setNegativeButton
+                            }
+
+                        }
+                    val alert = builder.create()
+                    alert.show()
+                    return@setOnClickListener
+                }
             }
+            else{
+                //Before: data validation
+                var data: Routes?
 
-            val dest = timearr.text.toString()
-            val values2: List<String> = dest.split(":")
-            if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
-                Log.d("Debug1", "ARRIVE at: $dest")
-            } else {
-                Toast.makeText(
-                    activity, "Error en la fecha, compruebe que la hora es correcta" +
-                            " XX:XX", Toast.LENGTH_LONG
-                ).show()
-                return@setOnClickListener
-            }
-
-            //submit = 1
-            Log.i("Status", "Synced realm: $syncedRealm")
-            if (syncedRealm?.isClosed == false) {
-                if(address!="" && address2!=""){
-                    Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
-                    routeCount += 1
-                    //val comm = view.findViewById<EditText>(R.id.comments).text.toString()
-                    val obId = ObjectId()
-
-                    syncedRealm?.executeTransaction { transact: Realm ->
-                        data = transact.createObject(Routes::class.java, obId)
-                        routes[routeCount - 1]._id = obId
-
-                        data?.origin = address
-                        routes[routeCount - 1].origin = address
-
-                        data?.destination = address2
-                        routes[routeCount - 1].destination = address2
-
-                        data?.depart = org
-                        data?.arrival = dest
-                        routes[routeCount - 1].depart = org
-                        routes[routeCount - 1].arrival = dest
-
-                        data?.uid = androidId
-
-                        var transport = ""
-                        if (checkb1) {
-                            data?.publictransport = true
-                            transport += "p"
-                            routes[routeCount - 1].publictransport = true
-                        }
-                        if (checkb2) {
-                            data?.car = true
-                            transport += "c"
-                            routes[routeCount - 1].car = true
-                        }
-                        if (checkb3) {
-                            data?.walk = true
-                            transport += "w"
-                            routes[routeCount - 1].walk = true
-                        }
-                        var day = ""
-                        if (chip3.isChecked) day += (chip3.text.toString())
-                        if (chip4.isChecked) day += (chip4.text.toString())
-                        if (chip5.isChecked) day += (chip5.text.toString())
-                        if (chip6.isChecked) day += (chip6.text.toString())
-                        if (chip7.isChecked) day += (chip7.text.toString())
-                        if (chip8.isChecked) day += (chip8.text.toString())
-                        if (chip9.isChecked) day += (chip9.text.toString())
-                        data?.days = day
-                        //data?.comment = comm
-                        //routes[routeCount-1].comment = comm
-                        routes[routeCount - 1].days = day
-
-                        result[0] = address
-                        result[1] = address2
-                        result[2] = timedep.text.toString()
-                        result[3] = timearr.text.toString()
-                        result[4] = day
-                        result[5] = transport
-                        setFragmentResult(
-                            "directionsRequested",
-                            bundleOf("bundleKey" to result)
-                        )
-                    }
-                    submitted=1
-                    activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
-                        routeCount-1, routeCount, "$address - $address2")
-
-                    val task = syncedRealm!!.where(Routes::class.java)
-                        .equalTo("_id", routes[routeCount-1]._id).findFirst()
-                    Log.v("EXAMPLE", "Fetched object by primary key: $task")
-                }else {
-                    Toast.makeText(activity, "Aviso. No se han introducido datos sobre " +
-                            "origen y/o destino", Toast.LENGTH_SHORT).show()
+                val org = timedep.text.toString()
+                val values: List<String> = org.split(":")
+                if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
+                    Log.i("Depart", "DEPART at: $org")
+                } else {
+                    Toast.makeText(
+                        activity, "Error en la fecha, compruebe que la hora es correcta" +
+                                " XX:XX", Toast.LENGTH_LONG
+                    ).show()
+                    return@setOnClickListener
                 }
 
-            } else {
-                Log.e("REALM error", "realm closed or wrong ref")
-                Toast.makeText(activity, "Error al guardar la ruta, revise " +
-                        "su conexión a internet", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                val dest = timearr.text.toString()
+                val values2: List<String> = dest.split(":")
+                if (values2[0].toInt() <= 23 && values2[1].toInt() <= 59) {
+                    Log.d("Debug1", "ARRIVE at: $dest")
+                } else {
+                    Toast.makeText(
+                        activity, "Error en la fecha, compruebe que la hora es correcta" +
+                                " XX:XX", Toast.LENGTH_LONG
+                    ).show()
+                    return@setOnClickListener
+                }
+
+                //submit = 1
+                Log.i("Status", "Synced realm: $syncedRealm")
+                if (syncedRealm?.isClosed == false) {
+                    if(address!="" && address2!=""){
+                        Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
+                        routeCount += 1
+                        //val comm = view.findViewById<EditText>(R.id.comments).text.toString()
+                        val obId = ObjectId()
+
+                        syncedRealm?.executeTransaction { transact: Realm ->
+                            data = transact.createObject(Routes::class.java, obId)
+                            routes[routeCount - 1]._id = obId
+
+                            data?.origin = address
+                            routes[routeCount - 1].origin = address
+
+                            data?.destination = address2
+                            routes[routeCount - 1].destination = address2
+
+                            data?.depart = org
+                            data?.arrival = dest
+                            routes[routeCount - 1].depart = org
+                            routes[routeCount - 1].arrival = dest
+
+                            data?.uid = androidId
+
+                            if (checkb1) {
+                                data?.car = true
+                                routes[routeCount - 1].car = true
+                            }
+                            if (checkb2) {
+                                data?.walk = true
+                                routes[routeCount - 1].walk = true
+                            }
+                            if (checkb3) {
+                                data?.publictransport = true
+                                routes[routeCount - 1].publictransport = true
+                            }
+                            var day = ""
+                            if (chip3.isChecked) day += (chip3.text.toString())
+                            if (chip4.isChecked) day += (chip4.text.toString())
+                            if (chip5.isChecked) day += (chip5.text.toString())
+                            if (chip6.isChecked) day += (chip6.text.toString())
+                            if (chip7.isChecked) day += (chip7.text.toString())
+                            if (chip8.isChecked) day += (chip8.text.toString())
+                            if (chip9.isChecked) day += (chip9.text.toString())
+                            data?.days = day
+                            //data?.comment = comm
+                            //routes[routeCount-1].comment = comm
+                            routes[routeCount - 1].days = day
+
+                            result[0] = address
+                            result[1] = address2
+                            result[2] = timedep.text.toString()
+                            result[3] = timearr.text.toString()
+                            result[4] = day
+                            //result[5] = transport
+                            /*setFragmentResult(
+                                "directionsRequested",
+                                bundleOf("bundleKey" to result)
+                            )*/
+                        }
+                        submitted=1
+                        activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                            routeCount-1, routeCount, "$address - $address2")
+
+                        val task = syncedRealm!!.where(Routes::class.java)
+                            .equalTo("_id", routes[routeCount-1]._id).findFirst()
+                        Log.v("EXAMPLE", "Fetched object by primary key: $task")
+                    }else {
+                        Toast.makeText(activity, "Aviso. No se han introducido datos sobre " +
+                                "origen y/o destino", Toast.LENGTH_SHORT).show()
+                    }
+
+                } else {
+                    Log.e("REALM error", "realm closed or wrong ref")
+                    Toast.makeText(activity, "Error al guardar la ruta, revise " +
+                            "su conexión a internet", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
             }
 
         }
 
+        //Functionality to draw the route defined
         val secondButton: FloatingActionButton = view.findViewById(R.id.buttonSecond)
         secondButton.setOnClickListener {
             days=""
@@ -445,10 +741,17 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 result[4] = days
                 result[5] = transp
 
-                marker = mMap.addMarker(MarkerOptions().position(marker!!.position)
-                    .draggable(true))
-                marker2 = mMap.addMarker(MarkerOptions().position(marker2!!.position)
-                    .draggable(true))
+                if(polyline==0){
+                    mMap.clear()
+                    marker = mMap.addMarker(
+                        MarkerOptions().position(marker!!.position)
+                            .draggable(true)
+                    )
+                    marker2 = mMap.addMarker(
+                        MarkerOptions().position(marker2!!.position)
+                            .draggable(true)
+                    )
+                }
 
                 setFragmentResult(
                         "directionsRequested",
@@ -471,6 +774,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         marker2?.position?.latitude.toString()+","+marker2?.position?.
                         longitude.toString()+"&mode=$mode"+"&key="+
                         GOOGLE_MAPS_API
+                    //&alternatives=true para estudiar rutas alternativas, ver como
+                    // mostrarlas posteriormente
                     //+departure_time or arrival_time according to the user preference
 
                 val builder = LatLngBounds.Builder()
@@ -521,6 +826,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             val aux = address
             address = address2
             address2 = aux
+            val auxM = marker
+            marker = marker2
+            marker2 = auxM
             autocompleteFragment!!.setText(address)
             autocompleteFragment2!!.setText(address2)
         }
@@ -529,9 +837,35 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
     }
 
-    private fun loginToMongo(): Realm?{
+    private fun populateMenu(_realm: Realm) {
+        // the realm should live exactly as long as the activity, so assign
+        // the realm to a member variable
+        syncedRealm = _realm
+        Log.i("RealmOK", "Successfully connected " +
+                "with realm $syncedRealm")
+        val task = syncedRealm!!.where(Routes::class.java)
+            .equalTo("uid", androidId).findAll()
+        Log.i("TASK-route: ", task.toString())
+        for (ruta in task){
+            routeCount+=1
+            activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
+                routeCount-1, routeCount,
+                "${ruta.origin} - ${ruta.destination}")
+            routes[routeCount-1]._id = ruta._id
+            routes[routeCount-1].uid = ruta.uid
+            routes[routeCount-1].origin = ruta.origin
+            routes[routeCount-1].destination = ruta.destination
+            routes[routeCount-1].depart = ruta.depart
+            routes[routeCount-1].arrival = ruta.arrival
+            routes[routeCount-1].publictransport = ruta.publictransport
+            routes[routeCount-1].car = ruta.car
+            routes[routeCount-1].walk = ruta.walk
+            routes[routeCount-1].days = ruta.days
+        }
+    }
 
-        var synced = syncedRealm
+    private fun loginToMongo(){
+
         if (syncedRealm == null) { //not logged in
             context?.let { Realm.init(it) }
             val appID = getString(R.string.app_id)
@@ -555,31 +889,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         .build()
                     //var realm: Realm
                     Realm.getInstanceAsync(config, object : Realm.Callback() {
-                        override fun onSuccess(_realm: Realm) {
-                            // the realm should live exactly as long as the activity, so assign
-                            // the realm to a member variable
-                            syncedRealm = _realm
-                            synced = syncedRealm
-                            Log.i("RealmOK", "Successfully connected " +
-                                    "with realm $syncedRealm")
-                            val task = syncedRealm!!.where(Routes::class.java)
-                                .equalTo("uid", androidId).findAll()
-                            for (ruta in task){
-                                routeCount+=1
-                                activity?.findViewById<NavigationView>(R.id.nav_view)?.menu?.add(1,
-                                    routeCount-1, routeCount,
-                                    "${ruta.origin} - ${ruta.destination}")
-                                routes[routeCount-1]._id = ruta._id
-                                routes[routeCount-1].uid = ruta.uid
-                                routes[routeCount-1].origin = ruta.origin
-                                routes[routeCount-1].destination = ruta.destination
-                                routes[routeCount-1].depart = ruta.depart
-                                routes[routeCount-1].arrival = ruta.arrival
-                                routes[routeCount-1].publictransport = ruta.publictransport
-                                routes[routeCount-1].car = ruta.car
-                                routes[routeCount-1].walk = ruta.walk
-                                routes[routeCount-1].days = ruta.days
-                            }
+                        override fun onSuccess(realm: Realm) {
+                            populateMenu(realm)
                         }
                     })
 
@@ -593,11 +904,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 }
             }
         }
-        else{
-            return synced
-        }
-
-        return synced
 
     }
 
@@ -608,6 +914,16 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         mMap.setOnMyLocationClickListener(this)
         mMap.setOnMarkerDragListener(this)
         mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
+
+        val chip: Chip? = view?.findViewById(R.id.chip_1)
+        val chip3: Chip? = view?.findViewById(R.id.chip_3)
+        val chip4: Chip? = view?.findViewById(R.id.chip_4)
+        val chip5: Chip? = view?.findViewById(R.id.chip_5)
+        val chip6: Chip? = view?.findViewById(R.id.chip_6)
+        val chip7: Chip? = view?.findViewById(R.id.chip_7)
+        val chip8: Chip? = view?.findViewById(R.id.chip_8)
+        val chip9: Chip? = view?.findViewById(R.id.chip_9)
+
 
         if (ContextCompat.checkSelfPermission(requireActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -667,11 +983,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         }
         else{
             if(!onMyLocationButtonClick()){
-            //Default map location
-            val madrid = LatLng(40.416729, -3.703339)
-            //marker = mMap.addMarker(MarkerOptions().position(madrid).draggable(true))!!
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 10.0F))
-            //clicked=1
+                //Default map location
+                val madrid = LatLng(40.416729, -3.703339)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(madrid, 10.0F))
+
             } //if the user is located, the map is updated to the user's current position
         }
 
@@ -679,28 +994,58 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         places.R.id.places_autocomplete_clear_button)
             .setOnClickListener {
                 autocompleteFragment!!.setText("")
-                Log.d("MARKER", marker.toString())
+                val timedep = view?.findViewById<EditText>(R.id.timeDepart)
+                timedep?.setText(R.string.hour)
+                chip?.isChecked = false
+                chip3?.isChecked = false
+                chip4?.isChecked = false
+                chip5?.isChecked = false
+                chip6?.isChecked = false
+                chip7?.isChecked = false
+                chip8?.isChecked = false
+                chip9?.isChecked = false
+
                 if(marker != null) marker!!.remove()
                 address=""
                 marker=null
                 clicked-=1
+                Log.i("CLICKED", clicked.toString())
                 it.visibility = View.GONE
+                if(polyline == 1){ //Clear previous polyline
+                    mMap.clear()
+                    polyline=0
+                }
             }
 
         autocompleteFragment2!!.requireView().findViewById<View>(com.google.android.libraries.
         places.R.id.places_autocomplete_clear_button)
             .setOnClickListener {
                 autocompleteFragment2!!.setText("")
-                Log.d("MARKER2", marker2.toString())
+                val timearr = view?.findViewById<EditText>(R.id.timeArrive)
+                timearr?.setText(R.string.hour)
+                chip?.isChecked = false
+                chip3?.isChecked = false
+                chip4?.isChecked = false
+                chip5?.isChecked = false
+                chip6?.isChecked = false
+                chip7?.isChecked = false
+                chip8?.isChecked = false
+                chip9?.isChecked = false
+
                 if(marker2 != null) marker2!!.remove()
                 marker2=null
                 address2=""
                 clicked-=1
+                Log.i("CLICKED", clicked.toString())
                 it.visibility = View.GONE
+                if(polyline == 1){ //Clear previous polyline
+                    mMap.clear()
+                    polyline=0
+                }
             }
 
         mMap.setOnMapClickListener { latlng -> // Clears the previously touched position
-
+            Log.i("CLICKED", clicked.toString())
             try{
                 if(clicked==0){
                     mMap.clear()
@@ -737,6 +1082,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
                     , Toast.LENGTH_SHORT).show()
                 Log.e("ERROR Locat", ex.toString())
+                clicked=0
             }
         }
 
@@ -755,12 +1101,12 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         if(mark == marker2){
             address2 = getAddress(mark.position.latitude, mark.position.longitude)
             autocompleteFragment2!!.setText(address2)
-            //marker2 = mark
+            marker2 = mark
         }
         else{
             address = getAddress(mark.position.latitude, mark.position.longitude)
             autocompleteFragment!!.setText(address)
-            //marker = mark
+            marker = mark
         }
     }
 
@@ -775,6 +1121,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             getFusedLocationProviderClient(requireActivity())
         mFusedLocationClient.lastLocation.addOnCompleteListener(requireActivity()) { task ->
             val location: Location? = task.result
+            Log.i("LocatClk", "getting loc... $location")
             retn = if (location == null) {
                 false
             } else{
@@ -810,6 +1157,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
     fun fillText(frag: Int, t: String){
 
         if(frag==1 && autocompleteFragment!=null){
+            autocompleteFragment!!.requireView().findViewById<View>(com.
+            google.android.libraries.
+            places.R.id.places_autocomplete_clear_button).performClick()
+
             autocompleteFragment!!.setText(t)
             Log.i("Origin", t)
             address = t
@@ -821,6 +1172,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 .draggable(true))!!
         }
         if(frag==2 && autocompleteFragment2!=null){
+            autocompleteFragment2!!.requireView().findViewById<View>(com.
+            google.android.libraries.
+            places.R.id.places_autocomplete_clear_button).performClick()
+
             autocompleteFragment2!!.setText(t)
             Log.i("Destination", t)
             address2 = t

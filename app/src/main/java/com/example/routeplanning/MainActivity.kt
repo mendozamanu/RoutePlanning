@@ -6,8 +6,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
@@ -70,9 +72,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.map){
-            mitem = item
-            mitem?.isVisible = false
+        if(item.itemId == R.id.refresh){
+            (myFragment as SecondFragment).loginToMongo()
+            Toast.makeText(this, "Reconectando...", Toast.LENGTH_SHORT).show()
+        }
+        if(item.itemId == R.id.add){ //Clears the form
+            (myFragment as SecondFragment).autocompleteFragment!!.requireView().
+            findViewById<View>(com.google.android.libraries.
+            places.R.id.places_autocomplete_clear_button).performClick()
+
+            (myFragment as SecondFragment).autocompleteFragment2!!.requireView().
+            findViewById<View>(com.google.android.libraries.
+            places.R.id.places_autocomplete_clear_button).performClick()
         }
 
         return true
@@ -81,6 +92,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle item selection
+        //TODO: ver como mostrar texto del menu en varias lineas para cada item
         val size: Int = navView.menu.size()
         Log.d("Size menu: ", size.toString())
         for (i in 0 until size) {
@@ -93,7 +105,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         Log.d("CHECKED", navView.menu.getItem(item.itemId+1).toString())
         (myFragment as SecondFragment).setFragmentResult(
             "itemListDirections",
-            bundleOf("bundleKey" to navView.menu.getItem(item.itemId+1).toString())
+            bundleOf("bundleKey" to item.itemId)
         )
 
         (myFragment as SecondFragment).fillText(1,

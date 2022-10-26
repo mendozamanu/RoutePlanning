@@ -12,5 +12,6 @@
         android:enabled="false"
         android:icon="@android:drawable/ic_dialog_map"
         android:title="@string/rutas"
-        app:showAsAction="never" />
+        app:showAsAction="never"
+        />
 </menu>

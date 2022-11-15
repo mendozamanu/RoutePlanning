@@ -89,6 +89,7 @@ var user: User? = null
 var syncedRealm: Realm? = null
 
 
+@Suppress("DEPRECATION")
 class SecondFragment: Fragment(), OnMapReadyCallback,
     GoogleMap.OnMyLocationButtonClickListener,
     GoogleMap.OnMarkerDragListener,
@@ -225,17 +226,17 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 s: CharSequence, start: Int, before: Int, count: Int) {
                 val text: String = timedep!!.text.toString()
                 val hm = text.chunked(2)
-                Log.i("HM: ", hm.toString())
                 val textlength = timedep!!.text.length
 
                 if (textlength == 4 && added==0 && !text.contains(":")) {
-                    timedep!!.setText("${hm[0]}:${hm[1]}")
+                    val hour = "${hm[0]}:${hm[1]}"
+                    timedep!!.setText(hour)
+                    Log.i("HM: ", hm.toString())
                     added=1
                 }
                 if(textlength == 0){
                     added = 0
                 }
-
             }
         })
         var added2 = 0
@@ -252,11 +253,12 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 s: CharSequence, start: Int, before: Int, count: Int) {
                 val text: String = timearr!!.text.toString()
                 val hm = text.chunked(2)
-                Log.i("HM: ", hm.toString())
                 val textlength = timearr!!.text.length
 
                 if (textlength == 4 && added2==0 && !text.contains(":")) {
-                    timearr!!.setText("${hm[0]}:${hm[1]}")
+                    val hour = "${hm[0]}:${hm[1]}"
+                    timearr!!.setText(hour)
+                    Log.i("HM: ", hm.toString())
                     added2=1
                 }
                 if(textlength==0){
@@ -428,7 +430,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         //Submit button functionality
         submit.setOnClickListener{
-            loginToMongo()
+            try{loginToMongo()} //onSuccess debería hacer populateMenu
+            catch(ex:Exception){
+                Log.e("MONGO-EXCEPTION", ex.toString())
+            }
             val addresses = itemI.split(" - ")
             Log.i("RealmOK", "Successfully connected with realm $syncedRealm")
             Log.d("SUBMITTED status", submitted.toString())
@@ -449,16 +454,18 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             var dest = timearr!!.text.toString()
             if(org.length<4){
                 val orign1 = org.first()
-                val orign2 = org.substring(1,2)
+                var orign2 = org.substring(1,2)
                 Log.i("ORIGD", "$orign1:$orign2")
-                timedep!!.setText("$orign1:$orign2")
+                orign2 = "$orign1:$orign2"
+                timedep!!.setText(orign2)
             }
 
             if(dest.length<4){
                 val dst1 = dest.first()
-                val dst2 = dest.substring(1,3)
+                var dst2 = dest.substring(1,3)
                 Log.i("DST", "$dst1:$dst2")
-                timearr!!.setText("$dst1:$dst2")
+                dst2 = "$dst1:$dst2"
+                timearr!!.setText(dst2)
             }
             val values: List<String> = org.split(":")
             val values2: List<String> = dest.split(":")
@@ -887,7 +894,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 //Route generation from the given points
                 var mode = "driving" //Defaults to driving as per api standard
                 if (checkb3) {
-                    mode="transit"
+                    mode="bicycling"
                 }
                 if (checkb2) {
                     mode="walking"
@@ -970,7 +977,6 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             autocompleteFragment!!.setText(address)
             autocompleteFragment2!!.setText(address2)
         }
-
         return view
 
     }
@@ -1113,6 +1119,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
             } catch (ex: IOException) {
                 ex.printStackTrace()
+                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
+                    , Toast.LENGTH_SHORT).show()
             }
         }
         else{
@@ -1223,8 +1231,10 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 clicked=0
             }
         }
-        loginToMongo() //onSuccess debería hacer populateMenu
-
+        try{loginToMongo()} //onSuccess debería hacer populateMenu
+        catch(ex:Exception){
+            Log.e("MONGO-EXCEPTION", ex.toString())
+        }
     }
 
     override fun onDestroyView() {
@@ -1270,7 +1280,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 true
             }
         }
-        return retn //the default behavior should still occur
+        return retn //the default behavior should still occur if location is null
     }
 
     override fun onMyLocationClick(p0: Location) {
@@ -1286,8 +1296,15 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
     private fun getAddress(lat: Double, lng: Double): String { //Get text address from LatLng data
         val geocoder = Geocoder(requireActivity())
-        val list = geocoder.getFromLocation(lat, lng, 1) //Deprecated for Android 13
-        return list!![0].getAddressLine(0)
+        try {
+            val list = geocoder.getFromLocation(lat, lng, 1) //Deprecated for Android 13
+            return list!![0].getAddressLine(0)
+        }catch(ex:Exception){
+            Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
+                , Toast.LENGTH_SHORT).show()
+            Log.e("ERROR GEOCODER", ex.toString())
+        }
+        return ""
     }
 
     fun getRoutes():MutableList<Routes> {
@@ -1305,11 +1322,17 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             Log.i("Origin", t)
             address = t
             marker?.remove()
-            val addr = geocoder?.getFromLocationName(t, 1) //Deprecated for Android 13
-            val location: Address = addr!![0]
-            val p1 = LatLng(location.latitude, location.longitude)
-            marker = mMap.addMarker(MarkerOptions().position(p1)
-                .draggable(true))!!
+            try {
+                val addr = geocoder?.getFromLocationName(t, 1)//Deprecated for Android 13
+                val location: Address = addr!![0]
+                val p1 = LatLng(location.latitude, location.longitude)
+                marker = mMap.addMarker(MarkerOptions().position(p1)
+                        .draggable(true))!!
+            }catch(ex:Exception){
+                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
+                    , Toast.LENGTH_SHORT).show()
+                Log.e("ERROR GEOCODER", ex.toString())
+            }
         }
         if(frag==2 && autocompleteFragment2!=null){
             autocompleteFragment2!!.requireView().findViewById<View>(com.
@@ -1320,11 +1343,17 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             Log.i("Destination", t)
             address2 = t
             marker2?.remove()
-            val addr = geocoder?.getFromLocationName(t, 1)
-            val location: Address = addr!![0]
-            val p1 = LatLng(location.latitude, location.longitude)
-            marker2 = mMap.addMarker(MarkerOptions().position(p1)
-                .draggable(true))!!
+            try {
+                val addr = geocoder?.getFromLocationName(t, 1)
+                val location: Address = addr!![0]
+                val p1 = LatLng(location.latitude, location.longitude)
+                marker2 = mMap.addMarker(MarkerOptions().position(p1)
+                    .draggable(true))!!
+            }catch(ex:Exception){
+                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
+                    , Toast.LENGTH_SHORT).show()
+                Log.e("ERROR GEOCODER", ex.toString())
+            }
         }
         clicked = 2
     }

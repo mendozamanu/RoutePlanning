@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private  var myFragment: Fragment? = null
-    private var mitem: MenuItem? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
 
@@ -92,7 +91,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle item selection
-        //TODO: ver como mostrar texto del menu en varias lineas para cada item
         val size: Int = navView.menu.size()
         Log.d("Size menu: ", size.toString())
         for (i in 0 until size) {

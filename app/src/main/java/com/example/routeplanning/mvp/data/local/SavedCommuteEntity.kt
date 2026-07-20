@@ -32,10 +32,7 @@ data class SavedCommuteEntity(
         destinationCoordinate = coordinateOrNull(destinationLatitude, destinationLongitude),
         departureHour = departureHour,
         departureMinute = departureMinute,
-        activeDays = activeDays.split(",")
-            .mapNotNull { encoded -> Weekday.entries.find { it.name == encoded } }
-            .toSet()
-            .ifEmpty { Weekday.workingDays },
+        activeDays = decodeActiveDays(activeDays),
         mode = JourneyMode.entries.find { it.name == mode } ?: JourneyMode.TRANSIT,
         profile = JourneyProfile.entries.find { it.name == profile } ?: JourneyProfile.FASTEST,
         createdAtEpochMillis = createdAtEpochMillis
@@ -64,5 +61,18 @@ data class SavedCommuteEntity(
             } else {
                 null
             }
+
+        private fun decodeActiveDays(value: String): Set<Weekday> {
+            val decoded = value.split(",")
+                .mapNotNull { encoded -> Weekday.entries.find { it.name == encoded } }
+                .toSet()
+                .ifEmpty { Weekday.workingDays }
+            if (decoded.size != 1) return decoded
+            return if (decoded.single() in Weekday.workingDays) {
+                Weekday.workingDays
+            } else {
+                Weekday.weekendDays
+            }
+        }
     }
 }

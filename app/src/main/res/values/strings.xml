@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Route planner</string>
+    <string name="app_name">Córdoba Connect</string>
     <!-- Strings used for fragments for navigation -->
     <string name="second_fragment_label">Route selection</string>
     <string name="next">Calculate route</string>
@@ -40,7 +40,6 @@
     <string name="mvp_empty_title">You have no saved journeys yet</string>
     <string name="mvp_empty_body">Save a recurring route so you can view it without searching again every day.</string>
     <string name="mvp_new_commute">New journey</string>
-    <string name="mvp_open_legacy">Open previous prototype</string>
     <string name="mvp_editor_title">Save journey</string>
     <string name="mvp_origin">Origin</string>
     <string name="mvp_destination">Destination</string>
@@ -51,6 +50,8 @@
     <string name="mvp_required_fields">Enter an origin and a destination.</string>
     <string name="mvp_commute_description">%1$s to %2$s</string>
     <string name="mvp_departure_description">Departure %1$s · %2$s</string>
+    <string name="mvp_schedule_weekdays">Weekdays</string>
+    <string name="mvp_schedule_weekends">Weekends</string>
     <string name="mvp_offline_storage">Journeys are stored locally and remain available offline</string>
     <string name="mvp_open_saved_map">Open map</string>
     <string name="mvp_delete_commute">Delete</string>

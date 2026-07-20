@@ -51,5 +51,6 @@ enum class Weekday(val shortLabel: String) {
 
     companion object {
         val workingDays: Set<Weekday> = entries.take(5).toSet()
+        val weekendDays: Set<Weekday> = entries.takeLast(2).toSet()
     }
 }

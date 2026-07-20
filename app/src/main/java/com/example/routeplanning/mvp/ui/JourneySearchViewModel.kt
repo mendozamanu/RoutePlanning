@@ -15,6 +15,7 @@ import com.example.routeplanning.mvp.domain.JourneyRepository
 import com.example.routeplanning.mvp.domain.JourneySearchResult
 import com.example.routeplanning.mvp.domain.SavedCommute
 import com.example.routeplanning.mvp.domain.SavedCommuteRepository
+import com.example.routeplanning.mvp.domain.Weekday
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -457,10 +458,22 @@ class JourneySearchViewModel(
         val current = mutableState.value
         val origin = current.origin ?: return
         val destination = current.destination ?: return
-        val departureTime = if (current.departureChoice == DepartureChoice.NOW) {
-            currentCordobaDateTime().toLocalTime()
+        val departureDate: LocalDate
+        val departureTime: LocalTime
+        if (current.departureChoice == DepartureChoice.NOW) {
+            val departure = currentCordobaDateTime()
+            departureDate = departure.toLocalDate()
+            departureTime = departure.toLocalTime()
         } else {
-            parseDepartureTime(current.departureTime) ?: return
+            departureDate = parseDepartureDate(current.departureDate) ?: return
+            departureTime = parseDepartureTime(current.departureTime) ?: return
+        }
+        val activeDays = if (
+            Weekday.valueOf(departureDate.dayOfWeek.name) in Weekday.workingDays
+        ) {
+            Weekday.workingDays
+        } else {
+            Weekday.weekendDays
         }
         viewModelScope.launch {
             savedCommuteRepository.upsert(
@@ -471,6 +484,7 @@ class JourneySearchViewModel(
                     destinationCoordinate = destination.coordinate,
                     departureHour = departureTime.hour,
                     departureMinute = departureTime.minute,
+                    activeDays = activeDays,
                     mode = current.mode,
                     profile = current.profile
                 )
@@ -613,6 +627,12 @@ class JourneySearchViewModel(
 
     private fun parseDepartureTime(value: String): LocalTime? = try {
         LocalTime.parse(value)
+    } catch (_: DateTimeParseException) {
+        null
+    }
+
+    private fun parseDepartureDate(value: String): LocalDate? = try {
+        LocalDate.parse(value)
     } catch (_: DateTimeParseException) {
         null
     }

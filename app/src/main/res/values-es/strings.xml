@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Planificador de rutas</string>
+    <string name="app_name">Córdoba Connect</string>
     <!-- Strings used for fragments for navigation -->
     <string name="second_fragment_label">Selección de ruta</string>
     <string name="next">Calcular ruta</string>
@@ -40,7 +40,6 @@
     <string name="mvp_empty_title">Aún no tienes trayectos guardados</string>
     <string name="mvp_empty_body">Guarda una ruta recurrente para consultarla sin repetir la búsqueda cada día.</string>
     <string name="mvp_new_commute">Nuevo trayecto</string>
-    <string name="mvp_open_legacy">Abrir prototipo anterior</string>
     <string name="mvp_editor_title">Guardar trayecto</string>
     <string name="mvp_origin">Origen</string>
     <string name="mvp_destination">Destino</string>
@@ -51,6 +50,8 @@
     <string name="mvp_required_fields">Introduce un origen y un destino.</string>
     <string name="mvp_commute_description">%1$s a %2$s</string>
     <string name="mvp_departure_description">Salida %1$s · %2$s</string>
+    <string name="mvp_schedule_weekdays">Entre semana</string>
+    <string name="mvp_schedule_weekends">Fin de semana</string>
     <string name="mvp_offline_storage">Trayectos guardados localmente y disponibles sin conexión</string>
     <string name="mvp_open_saved_map">Abrir mapa</string>
     <string name="mvp_delete_commute">Eliminar</string>

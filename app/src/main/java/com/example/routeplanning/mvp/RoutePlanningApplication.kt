@@ -9,6 +9,9 @@ class RoutePlanningApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.FIREBASE_SYNC_ENABLED.toBoolean()) {
+            FirebaseAppCheckInstaller.install()
+        }
         val apiKey = BuildConfig.GOOGLE_MAPS_API
         if (apiKey.isNotBlank() && !Places.isInitialized()) {
             val appLocale = resources.configuration.locales[0]

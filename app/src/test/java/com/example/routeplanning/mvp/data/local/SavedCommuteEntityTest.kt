@@ -29,4 +29,25 @@ class SavedCommuteEntityTest {
 
         assertEquals(original, restored)
     }
+
+    @Test
+    fun singleDaysFromEarlierVersionsAreNormalizedToScheduleCategories() {
+        val sunday = SavedCommute(
+            originLabel = "Casa",
+            destinationLabel = "Centro",
+            departureHour = 10,
+            departureMinute = 0,
+            activeDays = setOf(Weekday.SUNDAY)
+        )
+        val monday = sunday.copy(activeDays = setOf(Weekday.MONDAY))
+
+        assertEquals(
+            Weekday.weekendDays,
+            SavedCommuteEntity.fromDomain(sunday).toDomain().activeDays
+        )
+        assertEquals(
+            Weekday.workingDays,
+            SavedCommuteEntity.fromDomain(monday).toDomain().activeDays
+        )
+    }
 }

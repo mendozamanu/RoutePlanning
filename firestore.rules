@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsUserPath(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasValidCoordinates(data) {
+      return (
+        data.originLatitude == null &&
+        data.originLongitude == null &&
+        data.destinationLatitude == null &&
+        data.destinationLongitude == null
+      ) || (
+        data.originLatitude is number &&
+        data.originLatitude >= -90 && data.originLatitude <= 90 &&
+        data.originLongitude is number &&
+        data.originLongitude >= -180 && data.originLongitude <= 180 &&
+        data.destinationLatitude is number &&
+        data.destinationLatitude >= -90 && data.destinationLatitude <= 90 &&
+        data.destinationLongitude is number &&
+        data.destinationLongitude >= -180 && data.destinationLongitude <= 180
+      );
+    }
+
+    function hasValidCommute(commuteId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'schemaVersion',
+          'id',
+          'originLabel',
+          'destinationLabel',
+          'originLatitude',
+          'originLongitude',
+          'destinationLatitude',
+          'destinationLongitude',
+          'departureHour',
+          'departureMinute',
+          'activeDays',
+          'mode',
+          'profile',
+          'createdAtEpochMillis'
+        ]) &&
+        data.schemaVersion == 1 &&
+        data.id == commuteId &&
+        data.originLabel is string && data.originLabel.size() > 0 &&
+        data.originLabel.size() <= 500 &&
+        data.destinationLabel is string && data.destinationLabel.size() > 0 &&
+        data.destinationLabel.size() <= 500 &&
+        data.departureHour is int &&
+        data.departureHour >= 0 && data.departureHour <= 23 &&
+        data.departureMinute is int &&
+        data.departureMinute >= 0 && data.departureMinute <= 59 &&
+        data.activeDays is list &&
+        data.activeDays.size() > 0 && data.activeDays.size() <= 7 &&
+        data.mode in ['TRANSIT', 'BICYCLE', 'WALK'] &&
+        data.profile in ['FASTEST', 'FEWER_TRANSFERS', 'LESS_WALKING', 'ACCESSIBLE'] &&
+        data.createdAtEpochMillis is int && data.createdAtEpochMillis > 0 &&
+        hasValidCoordinates(data);
+    }
+
+    match /users/{userId}/savedCommutes/{commuteId} {
+      allow read, delete: if ownsUserPath(userId);
+      allow create, update: if ownsUserPath(userId) && hasValidCommute(commuteId);
+    }
+  }
+}

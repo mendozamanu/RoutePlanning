@@ -213,8 +213,25 @@ class JourneySearchViewModelTest {
         assertEquals(origin.coordinate, saved.originCoordinate)
         assertEquals(destination.coordinate, saved.destinationCoordinate)
         assertEquals(JourneyMode.BICYCLE, saved.mode)
+        assertEquals(Weekday.weekendDays, saved.activeDays)
         assertEquals(true, saved.canCalculateJourney)
         assertEquals(true, viewModel.state.value.saved)
+    }
+
+    @Test
+    fun scheduledWeekdayIsSavedAsTheWorkdayCategory() = runTest {
+        val savedRepository = InMemorySavedCommuteRepository()
+        val viewModel = viewModel(RecordingJourneyRepository(), savedRepository)
+        viewModel.selectOrigin(origin)
+        viewModel.selectDestination(destination)
+        viewModel.updateDepartureDate("2026-07-20")
+        viewModel.updateDepartureTime("08:15")
+
+        viewModel.save()
+        mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
+
+        val saved = savedRepository.observeAll().first().single()
+        assertEquals(Weekday.workingDays, saved.activeDays)
     }
 
     @Test

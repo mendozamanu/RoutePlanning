@@ -419,9 +419,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
         //Submit button functionality
         submit.setOnClickListener{
-            try{authenticateWithFirebase()} //onSuccess debería hacer populateMenu
-            catch(ex:Exception){
-                Log.e("FIREBASE-EXCEPTION", ex.toString())
+            if (!authenticateWithFirebase()) {
+                return@setOnClickListener
             }
             val addresses = itemI.split(" - ")
 
@@ -890,13 +889,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             }
     }
 
-    fun authenticateWithFirebase(){
+    fun authenticateWithFirebase(): Boolean {
         Log.w("AUTH", "Legacy Firebase sync has been disabled")
         Toast.makeText(
             activity,
             R.string.legacy_remote_sync_disabled,
             Toast.LENGTH_SHORT
         ).show()
+        return false
     }
 
     @SuppressLint("MissingPermission")

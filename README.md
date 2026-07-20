@@ -1,4 +1,4 @@
-# RoutePlanning
+# Córdoba Connect
 
 Android-first MVP for recurring urban journeys in Córdoba. The repository contains the
 new Compose client, the preserved legacy prototype and a FastAPI facade prepared for
@@ -12,6 +12,9 @@ Requirements:
 - Android SDK Platform 37.1 and Build Tools 36.0.0
 - A local `GOOGLE_MAPS_API` entry in the ignored `local.properties` file for the Google
   Places address selector and the preserved legacy Google Maps screen
+- A real `app/google-services.json` downloaded from your Firebase Android app when
+  Firestore synchronization is enabled. This file is ignored by Git; CI copies the safe
+  `app/google-services.example.json` placeholder because cloud sync is disabled in CI.
 
 The app compiles against API 37.1 and targets API 36, while keeping `minSdk 26`.
 It therefore remains installable on Android 8.0 and newer, including Android 13.
@@ -27,8 +30,62 @@ version supports:
 
 The launcher is now `MvpActivity`. It uses Compose and stores recurring journeys in a
 SQLCipher-encrypted Room database whose random passphrase is wrapped by Android Keystore.
-The old XML/Google Maps prototype remains reachable from the MVP home screen while its
-features are replaced.
+An optional local-first Firestore layer can synchronize those Room records after its
+security prerequisites have been configured. The old XML/Google Maps prototype remains
+reachable from the MVP home screen while its features are replaced; its unsafe global
+Firestore writer is disabled.
+
+## Optional Firestore synchronization
+
+Firestore synchronization is compiled into the app but is disabled by default. Room stays
+the source shown by the UI and accepts saves while offline. When synchronization is enabled,
+the app signs in anonymously, merges existing local and remote journeys, and listens under:
+
+```text
+/users/{firebaseAuthUid}/savedCommutes/{journeyId}
+```
+
+The old global `/routes` collection is neither read nor migrated. Anonymous authentication
+keeps a stable UID while the app installation exists, but it does not recover data after an
+uninstall and does not synchronize between different devices. That requires adding a real
+sign-in provider later and linking the anonymous account to it.
+
+Before enabling synchronization:
+
+1. Use a Firebase project you control. Treat the legacy project/account as compromised,
+   rotate any old unrestricted keys, register the Android package
+   `com.example.routeplanning`, and place the freshly downloaded configuration at
+   `app/google-services.json`. The real file remains local and ignored by Git.
+2. In Firebase Authentication, enable the **Anonymous** sign-in provider.
+3. Create a Firestore database, then publish the repository rules before allowing client
+   access:
+
+   ```powershell
+   firebase login
+   firebase deploy --only firestore:rules --project YOUR_PROJECT_ID
+   ```
+
+4. Register the Android app in Firebase App Check. Debug builds use the App Check debug
+   provider; copy the debug token from Logcat into the Firebase console. Release builds use
+   Play Integrity and require the release SHA-256 fingerprint. Observe App Check metrics
+   before enabling Firestore enforcement.
+5. Add this only to the ignored `local.properties` file:
+
+   ```properties
+   FIREBASE_SYNC_ENABLED=true
+   ```
+
+Saved journeys contain address labels and coordinates. Enabling this option uploads that
+personal location data to your Firebase project, so a production release also needs a clear
+privacy notice, retention/deletion policy and an account-based delete/export flow.
+
+The Firebase key inside `google-services.json` cannot be hidden from a compiled Android
+client and is not what authorizes Firestore access. The real config is nevertheless kept
+out of this repository to isolate contributors and Firebase projects. Security comes from
+Firebase Authentication, `firestore.rules`, App Check and quotas. In Google Cloud Console,
+keep the Firebase key restricted to the required Firebase APIs. Use a separate Maps/Places
+key and restrict it to the Android package, every allowed signing SHA-1, Maps SDK for
+Android and Places API. Never ship or commit a service-account key.
 
 ## Run the current vertical slice
 
@@ -115,6 +172,8 @@ Git. The pinned local OTP stack is documented in [infra/otp/README.md](infra/otp
   a combined AUCORSA and official Renfe Media Distancia graph and the FastAPI GraphQL
   adapter. Current-date bus planning uses an explicitly labelled weekly projection of the
   last official AUCORSA schedule; rail planning uses the latest downloaded Renfe schedule.
+- Optional but disabled until configured: local-first Firestore synchronization with
+  per-UID rules, anonymous authentication and App Check.
 - Not connected yet: PostGIS, alerts, FCM and cloud deployment.
 - Real-time urban ETA is intentionally not promised because no reusable public AUCORSA
   real-time feed has been confirmed.

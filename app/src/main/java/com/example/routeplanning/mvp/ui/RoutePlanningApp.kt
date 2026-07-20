@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +41,8 @@ import com.example.routeplanning.mvp.domain.CurrentLocationProvider
 import com.example.routeplanning.mvp.domain.SavedCommute
 import com.example.routeplanning.mvp.domain.SavedCommuteRepository
 import com.example.routeplanning.mvp.domain.Weekday
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 
 private const val HOME_ROUTE = "home"
 private const val SEARCH_ROUTE = "search"
@@ -51,8 +54,7 @@ private const val SEARCH_ROUTE_PATTERN =
 fun RoutePlanningApp(
     repository: SavedCommuteRepository,
     journeyRepository: JourneyRepository,
-    currentLocationProvider: CurrentLocationProvider,
-    onOpenLegacy: () -> Unit
+    currentLocationProvider: CurrentLocationProvider
 ) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = HOME_ROUTE) {
@@ -67,8 +69,7 @@ fun RoutePlanningApp(
                         "$SEARCH_ROUTE?$SAVED_COMMUTE_ID_ARGUMENT=${Uri.encode(commute.id)}"
                     )
                 },
-                onDeleteCommute = homeViewModel::delete,
-                onOpenLegacy = onOpenLegacy
+                onDeleteCommute = homeViewModel::delete
             )
         }
         composable(
@@ -123,8 +124,7 @@ private fun HomeScreen(
     commutes: List<SavedCommute>,
     onSearchJourney: () -> Unit,
     onOpenCommute: (SavedCommute) -> Unit,
-    onDeleteCommute: (String) -> Unit,
-    onOpenLegacy: () -> Unit
+    onDeleteCommute: (String) -> Unit
 ) {
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.mvp_title)) }) }) { padding ->
         LazyColumn(
@@ -163,9 +163,6 @@ private fun HomeScreen(
                 Button(onClick = onSearchJourney, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.mvp_search_journey))
                 }
-                OutlinedButton(onClick = onOpenLegacy, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.mvp_open_legacy))
-                }
                 Text(
                     stringResource(R.string.mvp_offline_storage),
                     style = MaterialTheme.typography.bodySmall,
@@ -182,16 +179,20 @@ private fun CommuteCard(
     onOpenMap: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val weekdayLabels = mapOf(
-        Weekday.MONDAY to stringResource(R.string.l),
-        Weekday.TUESDAY to stringResource(R.string.m),
-        Weekday.WEDNESDAY to stringResource(R.string.x),
-        Weekday.THURSDAY to stringResource(R.string.j),
-        Weekday.FRIDAY to stringResource(R.string.v),
-        Weekday.SATURDAY to stringResource(R.string.s),
-        Weekday.SUNDAY to stringResource(R.string.d)
-    )
-    val activeDaysLabel = commute.activeDays.joinToString("") { weekdayLabels.getValue(it) }
+    val locale = LocalConfiguration.current.locales[0]
+    val activeDaysLabel = when {
+        commute.activeDays == Weekday.workingDays ||
+            (commute.activeDays.size == 1 && commute.activeDays.single() in Weekday.workingDays) ->
+            stringResource(R.string.mvp_schedule_weekdays)
+        commute.activeDays == Weekday.weekendDays ||
+            (commute.activeDays.size == 1 && commute.activeDays.single() in Weekday.weekendDays) ->
+            stringResource(R.string.mvp_schedule_weekends)
+        else -> commute.activeDays
+            .sortedBy(Weekday::ordinal)
+            .joinToString(", ") {
+                DayOfWeek.valueOf(it.name).getDisplayName(TextStyle.SHORT, locale)
+            }
+    }
     val modeLabel = when (commute.mode) {
         JourneyMode.TRANSIT -> stringResource(R.string.mvp_mode_transit)
         JourneyMode.BICYCLE -> stringResource(R.string.mvp_mode_bicycle)

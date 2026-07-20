@@ -16,6 +16,7 @@ local.properties
 secrets.properties
 .env
 .env.*
+/app/google-services.json
 *service-account*.json
 backend/credentials/
 backend/.venv/

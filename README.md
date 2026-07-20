@@ -184,6 +184,23 @@ Additional technical documentation is available in:
 - [OpenStreetMap extraction](infra/osm/README.md)
 - [Routing data](data/README.md)
 
+## Use of Codex (GPT-5.6)
+
+OpenAI Codex with GPT-5.6 was used as a supervised AI development collaborator throughout
+the MVP. It assisted with exploring the original Kotlin codebase, planning the Android and
+routing architecture, implementing and refactoring Kotlin/Compose and Python/FastAPI code,
+integrating OpenTripPlanner and GTFS data, writing tests and documentation, upgrading build
+dependencies, and investigating build and runtime errors.
+
+All product decisions, mobility assumptions, data-source choices, credential and cloud
+configuration, and acceptance of the resulting changes remained under human control. Codex
+worked directly against the repository and its suggestions were reviewed and validated with
+the relevant Gradle, Python, lint and local Docker checks before being retained.
+
+Codex is used only during development: it is not embedded in the Android application or
+backend, the deployed product does not require an OpenAI API key, and journey planning does
+not send application or user data to OpenAI.
+
 ## License
 
 The Córdoba Connect source code is free software licensed under the

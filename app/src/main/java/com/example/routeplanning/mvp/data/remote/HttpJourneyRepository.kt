@@ -71,8 +71,7 @@ class HttpJourneyRepository internal constructor(
         fun create(baseUrl: String, allowCleartext: Boolean): HttpJourneyRepository {
             val normalizedBaseUrl = baseUrl.trimEnd('/')
             val uri = URI(normalizedBaseUrl)
-            val localCleartextHost = uri.host in setOf("10.0.2.2", "127.0.0.1", "localhost")
-            require(uri.scheme == "https" || (allowCleartext && localCleartextHost)) {
+            require(isAllowedApiEndpoint(uri, allowCleartext)) {
                 "The journey API must use HTTPS except on a local debug host"
             }
             return HttpJourneyRepository(

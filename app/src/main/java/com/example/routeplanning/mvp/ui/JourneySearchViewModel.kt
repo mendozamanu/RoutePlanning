@@ -1,5 +1,6 @@
 package com.example.routeplanning.mvp.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -224,10 +225,19 @@ class JourneySearchViewModel(
             }
             try {
                 val coordinate = currentLocationProvider.currentCoordinate()
+                val resolvedLabel = try {
+                    currentLocationProvider.addressLabel(coordinate)
+                        ?.trim()
+                        ?.takeIf(String::isNotEmpty)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (_: Exception) {
+                    null
+                }
                 mutableState.update {
                     val currentLocation = AddressPlace(
                         id = CURRENT_LOCATION_PLACE_ID,
-                        label = currentLocationLabel,
+                        label = resolvedLabel ?: currentLocationLabel,
                         coordinate = coordinate
                     )
                     val serviceAreaError = serviceAreaErrorMessage(
@@ -363,6 +373,7 @@ class JourneySearchViewModel(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: JourneyApiException) {
+                runCatching { Log.w(TAG, "Route search failed (${error.code})", error) }
                 mutableState.update {
                     it.copy(
                         isSearching = false,
@@ -380,7 +391,8 @@ class JourneySearchViewModel(
                         errorRetryable = error.retryable
                     )
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                runCatching { Log.w(TAG, "Unexpected route search failure", error) }
                 mutableState.update {
                     it.copy(
                         isSearching = false,
@@ -661,6 +673,7 @@ class JourneySearchViewModel(
         val CORDOBA_ZONE: ZoneId = ZoneId.of("Europe/Madrid")
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         private const val CURRENT_LOCATION_PLACE_ID = "device:current-location"
+        private const val TAG = "JourneySearch"
 
         fun factory(
             journeyRepository: JourneyRepository,

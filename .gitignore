@@ -17,6 +17,7 @@ secrets.properties
 .env
 .env.*
 /app/google-services.json
+/deploy/oracle/.env
 *service-account*.json
 backend/credentials/
 backend/.venv/

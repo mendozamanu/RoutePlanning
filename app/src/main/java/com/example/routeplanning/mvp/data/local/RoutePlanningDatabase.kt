@@ -32,17 +32,17 @@ abstract class RoutePlanningDatabase : RoomDatabase() {
         }
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE saved_commutes ADD COLUMN origin_latitude REAL")
-                database.execSQL("ALTER TABLE saved_commutes ADD COLUMN origin_longitude REAL")
-                database.execSQL("ALTER TABLE saved_commutes ADD COLUMN destination_latitude REAL")
-                database.execSQL("ALTER TABLE saved_commutes ADD COLUMN destination_longitude REAL")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE saved_commutes ADD COLUMN origin_latitude REAL")
+                db.execSQL("ALTER TABLE saved_commutes ADD COLUMN origin_longitude REAL")
+                db.execSQL("ALTER TABLE saved_commutes ADD COLUMN destination_latitude REAL")
+                db.execSQL("ALTER TABLE saved_commutes ADD COLUMN destination_longitude REAL")
             }
         }
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "ALTER TABLE saved_commutes ADD COLUMN mode TEXT NOT NULL DEFAULT 'TRANSIT'"
                 )
             }

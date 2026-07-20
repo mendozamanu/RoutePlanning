@@ -1,0 +1,52 @@
+name: cordoba-connect
+
+services:
+  otp:
+    image: docker.io/opentripplanner/opentripplanner:2.9.0@sha256:a7eac7da397faa9ec9dee407d4204895d24df4981500662fa6793aae0e71fd8f
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx${OTP_MAX_HEAP:-4g}
+    expose:
+      - "8080"
+    volumes:
+      - ../../infra/otp/data:/var/opentripplanner:ro
+      - ../../infra/otp/config/otp-config.json:/var/opentripplanner/otp-config.json:ro
+    command: ["--load", "--serve"]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    environment:
+      OTP_BASE_URL: http://otp:8080/otp/gtfs/v1
+      OTP_TIMEOUT_SECONDS: ${OTP_TIMEOUT_SECONDS:-20}
+      TRANSIT_DATA_VERSION: ${TRANSIT_DATA_VERSION:?Set TRANSIT_DATA_VERSION in deploy/oracle/.env}
+      TRANSIT_DATA_EXPIRES_ON: ${TRANSIT_DATA_EXPIRES_ON:?Set TRANSIT_DATA_EXPIRES_ON in deploy/oracle/.env}
+      ALLOW_EXPIRED_TRANSIT_DATA: ${ALLOW_EXPIRED_TRANSIT_DATA:-false}
+    expose:
+      - "8000"
+    depends_on:
+      - otp
+    restart: unless-stopped
+
+  caddy:
+    image: docker.io/library/caddy:2-alpine
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in deploy/oracle/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in deploy/oracle/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

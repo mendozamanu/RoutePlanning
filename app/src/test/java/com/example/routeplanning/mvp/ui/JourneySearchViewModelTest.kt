@@ -97,6 +97,34 @@ class JourneySearchViewModelTest {
     }
 
     @Test
+    fun resolvedCurrentLocationAddressIsDisplayedAndSavedWithItsCoordinates() = runTest {
+        val coordinate = Coordinate(37.8845, -4.7796)
+        val resolvedAddress = "Calle Cruz Conde 12, Córdoba"
+        val savedRepository = InMemorySavedCommuteRepository()
+        val locationProvider = object : CurrentLocationProvider {
+            override suspend fun currentCoordinate(): Coordinate = coordinate
+
+            override suspend fun addressLabel(coordinate: Coordinate): String = resolvedAddress
+        }
+        val viewModel = viewModel(
+            journeyRepository = RecordingJourneyRepository(),
+            savedRepository = savedRepository,
+            currentLocationProvider = locationProvider
+        )
+
+        viewModel.useCurrentLocation("Mi ubicación")
+        mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
+        viewModel.selectDestination(destination)
+        viewModel.save()
+        mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
+
+        val saved = savedRepository.observeAll().first().single()
+        assertEquals(resolvedAddress, viewModel.state.value.origin?.label)
+        assertEquals(resolvedAddress, saved.originLabel)
+        assertEquals(coordinate, saved.originCoordinate)
+    }
+
+    @Test
     fun unavailableCurrentLocationShowsAnActionableError() = runTest {
         val message = "Activa la ubicación del dispositivo."
         val viewModel = viewModel(

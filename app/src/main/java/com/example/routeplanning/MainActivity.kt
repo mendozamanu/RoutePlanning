@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == R.id.refresh){
             (myFragment as SecondFragment).authenticateWithFirebase()
-            Toast.makeText(this, "Reconectando...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.legacy_reconnecting, Toast.LENGTH_SHORT).show()
         }
         if(item.itemId == R.id.add){ //Clears the form
             (myFragment as SecondFragment).autocompleteFragment!!.requireView().

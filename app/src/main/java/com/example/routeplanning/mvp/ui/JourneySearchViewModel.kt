@@ -49,6 +49,26 @@ enum class JourneySearchErrorKind {
     UNKNOWN
 }
 
+enum class JourneySearchErrorMessage {
+    ADDRESS_NO_SELECTION,
+    PLACES_NOT_CONFIGURED,
+    ADDRESS_COORDINATES_UNAVAILABLE,
+    ADDRESS_DETAILS_UNAVAILABLE,
+    ADDRESS_SEARCH_FAILED,
+    MAPS_API_MISSING,
+    CURRENT_LOCATION_UNAVAILABLE,
+    LOCATION_PERMISSION_DENIED,
+    SERVICE_UNAVAILABLE,
+    MISSING_ADDRESSES,
+    CURRENT_LOCATION_OUTSIDE_AREA,
+    ORIGIN_OUTSIDE_AREA,
+    DESTINATION_OUTSIDE_AREA,
+    ROUTE_OUTSIDE_AREA,
+    INVALID_DEPARTURE,
+    SAVED_COMMUTE_UNAVAILABLE,
+    SAVED_COMMUTE_MISSING_COORDINATES
+}
+
 data class ModeRecommendation(
     val mode: JourneyMode,
     val durationMinutes: Int,
@@ -70,7 +90,7 @@ data class JourneySearchState(
     val isLocating: Boolean = false,
     val result: JourneySearchResult? = null,
     val searchedDepartureAt: OffsetDateTime? = null,
-    val errorMessage: String? = null,
+    val errorMessage: JourneySearchErrorMessage? = null,
     val errorKind: JourneySearchErrorKind? = null,
     val errorRetryable: Boolean = false,
     val saved: Boolean = false
@@ -186,7 +206,7 @@ class JourneySearchViewModel(
         )
     }
 
-    fun useCurrentLocation() {
+    fun useCurrentLocation(currentLocationLabel: String = "My location") {
         locationJob?.cancel()
         locationJob = viewModelScope.launch {
             mutableState.update {
@@ -206,7 +226,7 @@ class JourneySearchViewModel(
                 mutableState.update {
                     val currentLocation = AddressPlace(
                         id = CURRENT_LOCATION_PLACE_ID,
-                        label = CURRENT_LOCATION_LABEL,
+                        label = currentLocationLabel,
                         coordinate = coordinate
                     )
                     val serviceAreaError = serviceAreaErrorMessage(
@@ -226,11 +246,11 @@ class JourneySearchViewModel(
                 }
             } catch (error: CancellationException) {
                 throw error
-            } catch (error: CurrentLocationUnavailableException) {
+            } catch (_: CurrentLocationUnavailableException) {
                 mutableState.update {
                     it.copy(
                         isLocating = false,
-                        errorMessage = error.message,
+                        errorMessage = JourneySearchErrorMessage.CURRENT_LOCATION_UNAVAILABLE,
                         errorKind = JourneySearchErrorKind.LOCATION_UNAVAILABLE,
                         errorRetryable = true
                     )
@@ -239,7 +259,7 @@ class JourneySearchViewModel(
                 mutableState.update {
                     it.copy(
                         isLocating = false,
-                        errorMessage = "No hemos podido obtener tu ubicación en este momento.",
+                        errorMessage = JourneySearchErrorMessage.CURRENT_LOCATION_UNAVAILABLE,
                         errorKind = JourneySearchErrorKind.LOCATION_UNAVAILABLE,
                         errorRetryable = true
                     )
@@ -293,7 +313,7 @@ class JourneySearchViewModel(
         )
     }
 
-    fun showAddressError(message: String) = mutableState.update {
+    fun showAddressError(message: JourneySearchErrorMessage) = mutableState.update {
         it.copy(
             errorMessage = message,
             errorKind = JourneySearchErrorKind.ADDRESS_SELECTION,
@@ -303,7 +323,7 @@ class JourneySearchViewModel(
 
     fun showLocationPermissionDenied() = mutableState.update {
         it.copy(
-            errorMessage = "No se ha concedido el permiso de ubicación. Puedes seleccionar una dirección manualmente.",
+            errorMessage = JourneySearchErrorMessage.LOCATION_PERMISSION_DENIED,
             errorKind = JourneySearchErrorKind.LOCATION_PERMISSION,
             errorRetryable = false
         )
@@ -346,7 +366,11 @@ class JourneySearchViewModel(
                     it.copy(
                         isSearching = false,
                         isComparingModes = false,
-                        errorMessage = error.message,
+                        errorMessage = if (error.code == "OUTSIDE_SERVICE_AREA") {
+                            JourneySearchErrorMessage.ROUTE_OUTSIDE_AREA
+                        } else {
+                            JourneySearchErrorMessage.SERVICE_UNAVAILABLE
+                        },
                         errorKind = if (error.code == "OUTSIDE_SERVICE_AREA") {
                             JourneySearchErrorKind.OUTSIDE_SERVICE_AREA
                         } else {
@@ -360,7 +384,7 @@ class JourneySearchViewModel(
                     it.copy(
                         isSearching = false,
                         isComparingModes = false,
-                        errorMessage = "No podemos calcular el trayecto en este momento.",
+                        errorMessage = JourneySearchErrorMessage.SERVICE_UNAVAILABLE,
                         errorKind = JourneySearchErrorKind.UNKNOWN,
                         errorRetryable = true
                     )
@@ -461,7 +485,7 @@ class JourneySearchViewModel(
         if (origin == null || destination == null) {
             mutableState.update {
                 it.copy(
-                    errorMessage = "Selecciona una dirección de origen y otra de destino.",
+                    errorMessage = JourneySearchErrorMessage.MISSING_ADDRESSES,
                     errorKind = JourneySearchErrorKind.MISSING_ADDRESSES,
                     errorRetryable = false
                 )
@@ -472,9 +496,9 @@ class JourneySearchViewModel(
             mutableState.update {
                 it.copy(
                     errorMessage = if (origin.id == CURRENT_LOCATION_PLACE_ID) {
-                        "Tu ubicación actual está fuera del área urbana de Córdoba."
+                        JourneySearchErrorMessage.CURRENT_LOCATION_OUTSIDE_AREA
                     } else {
-                        "El origen seleccionado está fuera del área urbana de Córdoba."
+                        JourneySearchErrorMessage.ORIGIN_OUTSIDE_AREA
                     },
                     errorKind = JourneySearchErrorKind.OUTSIDE_SERVICE_AREA,
                     errorRetryable = false
@@ -485,7 +509,7 @@ class JourneySearchViewModel(
         if (!CordobaServiceArea.contains(destination.coordinate)) {
             mutableState.update {
                 it.copy(
-                    errorMessage = "El destino seleccionado está fuera del área urbana de Córdoba.",
+                    errorMessage = JourneySearchErrorMessage.DESTINATION_OUTSIDE_AREA,
                     errorKind = JourneySearchErrorKind.OUTSIDE_SERVICE_AREA,
                     errorRetryable = false
                 )
@@ -502,7 +526,7 @@ class JourneySearchViewModel(
             } catch (_: DateTimeParseException) {
                 mutableState.update {
                     it.copy(
-                        errorMessage = "Selecciona una fecha y una hora válidas.",
+                        errorMessage = JourneySearchErrorMessage.INVALID_DEPARTURE,
                         errorKind = JourneySearchErrorKind.INVALID_DEPARTURE,
                         errorRetryable = false
                     )
@@ -525,7 +549,7 @@ class JourneySearchViewModel(
             if (commute == null) {
                 mutableState.update {
                     it.copy(
-                        errorMessage = "El trayecto guardado ya no está disponible.",
+                        errorMessage = JourneySearchErrorMessage.SAVED_COMMUTE_UNAVAILABLE,
                         errorKind = JourneySearchErrorKind.SAVED_COMMUTE,
                         errorRetryable = false
                     )
@@ -537,7 +561,7 @@ class JourneySearchViewModel(
             if (originCoordinate == null || destinationCoordinate == null) {
                 mutableState.update {
                     it.copy(
-                        errorMessage = "Este trayecto se guardó sin coordenadas. Vuelve a crearlo para abrir el mapa.",
+                        errorMessage = JourneySearchErrorMessage.SAVED_COMMUTE_MISSING_COORDINATES,
                         errorKind = JourneySearchErrorKind.SAVED_COMMUTE,
                         errorRetryable = false
                     )
@@ -600,16 +624,16 @@ class JourneySearchViewModel(
     private fun serviceAreaErrorMessage(
         origin: AddressPlace?,
         destination: AddressPlace?
-    ): String? = when {
+    ): JourneySearchErrorMessage? = when {
         origin != null && !CordobaServiceArea.contains(origin.coordinate) -> {
             if (origin.id == CURRENT_LOCATION_PLACE_ID) {
-                "Tu ubicación actual está fuera del área urbana de Córdoba."
+                JourneySearchErrorMessage.CURRENT_LOCATION_OUTSIDE_AREA
             } else {
-                "El origen seleccionado está fuera del área urbana de Córdoba."
+                JourneySearchErrorMessage.ORIGIN_OUTSIDE_AREA
             }
         }
         destination != null && !CordobaServiceArea.contains(destination.coordinate) ->
-            "El destino seleccionado está fuera del área urbana de Córdoba."
+            JourneySearchErrorMessage.DESTINATION_OUTSIDE_AREA
         else -> null
     }
 
@@ -617,7 +641,6 @@ class JourneySearchViewModel(
         val CORDOBA_ZONE: ZoneId = ZoneId.of("Europe/Madrid")
         private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         private const val CURRENT_LOCATION_PLACE_ID = "device:current-location"
-        private const val CURRENT_LOCATION_LABEL = "Mi ubicación"
 
         fun factory(
             journeyRepository: JourneyRepository,

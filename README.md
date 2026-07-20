@@ -32,11 +32,47 @@ features are replaced.
 
 ## Run the current vertical slice
 
-With Docker Desktop running, open two PowerShell terminals in the repository root:
+### Local prerequisites
+
+Docker Desktop with Docker Compose is required for the OpenStreetMap extraction and the
+OpenTripPlanner infrastructure. Start Docker Desktop before running any script under
+`infra\osm` or `infra\otp`. The FastAPI backend itself runs with Python 3.12, but it needs
+the local OpenTripPlanner container to calculate routes.
+
+From PowerShell in the repository root, create the backend environment once:
+
+```powershell
+py -3.12 -m venv backend\.venv-win
+.\backend\.venv-win\Scripts\python.exe -m pip install -e "backend[dev]"
+```
+
+### Prepare the routing infrastructure
+
+The preparation scripts are only needed for a first setup or when the OSM/GTFS inputs
+change. Place the Andalucía `.osm.pbf` source in the repository root (the extraction
+script defaults to `andalucia-260717.osm.pbf`) and make sure the projected AUCORSA GTFS
+described in [data/README.md](data/README.md) is available. Then run:
+
+```powershell
+.\infra\osm\extract-cordoba.ps1
+.\infra\otp\download-renfe-gtfs.ps1
+.\infra\otp\prepare-data.ps1 -OsmPath .\data\raw\osm\cordoba.osm.pbf
+.\infra\otp\build-graph.ps1
+```
+
+These commands create the Córdoba OSM extract, download the current Renfe GTFS, copy the
+routing inputs into `infra\otp\data`, and build the OTP graph in Docker.
+
+### Start the backend and infrastructure
+
+With Docker Desktop running, open two PowerShell terminals in the repository root. Start
+OpenTripPlanner first:
 
 ```powershell
 .\infra\otp\start.ps1
 ```
+
+Then start FastAPI in the second terminal:
 
 ```powershell
 .\infra\backend\start.ps1
@@ -48,6 +84,12 @@ as origin, opens Google Places for the destination, offers native Android date/t
 pickers, lets the user choose public transport, bicycle or walking, calls FastAPI through
 `http://10.0.2.2:8000`, and displays OTP alternatives. `GOOGLE_MAPS_API` must be present
 only in the ignored `local.properties`.
+
+Stop OpenTripPlanner when finished:
+
+```powershell
+.\infra\otp\stop.ps1
+```
 
 ## Backend
 

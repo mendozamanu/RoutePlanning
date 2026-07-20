@@ -39,6 +39,7 @@ import com.example.routeplanning.mvp.domain.JourneyMode
 import com.example.routeplanning.mvp.domain.CurrentLocationProvider
 import com.example.routeplanning.mvp.domain.SavedCommute
 import com.example.routeplanning.mvp.domain.SavedCommuteRepository
+import com.example.routeplanning.mvp.domain.Weekday
 
 private const val HOME_ROUTE = "home"
 private const val SEARCH_ROUTE = "search"
@@ -91,12 +92,15 @@ fun RoutePlanningApp(
                 )
             )
             val state by searchViewModel.state.collectAsStateWithLifecycle()
+            val currentLocationLabel = stringResource(R.string.mvp_current_location)
             JourneySearchScreen(
                 state = state,
                 onOriginSelected = searchViewModel::selectOrigin,
                 onDestinationSelected = searchViewModel::selectDestination,
                 onAddressError = searchViewModel::showAddressError,
-                onUseCurrentLocation = searchViewModel::useCurrentLocation,
+                onUseCurrentLocation = {
+                    searchViewModel.useCurrentLocation(currentLocationLabel)
+                },
                 onLocationPermissionDenied = searchViewModel::showLocationPermissionDenied,
                 onSwapLocations = searchViewModel::swapLocations,
                 onDepartureNowSelected = searchViewModel::selectDepartureNow,
@@ -178,6 +182,16 @@ private fun CommuteCard(
     onOpenMap: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val weekdayLabels = mapOf(
+        Weekday.MONDAY to stringResource(R.string.l),
+        Weekday.TUESDAY to stringResource(R.string.m),
+        Weekday.WEDNESDAY to stringResource(R.string.x),
+        Weekday.THURSDAY to stringResource(R.string.j),
+        Weekday.FRIDAY to stringResource(R.string.v),
+        Weekday.SATURDAY to stringResource(R.string.s),
+        Weekday.SUNDAY to stringResource(R.string.d)
+    )
+    val activeDaysLabel = commute.activeDays.joinToString("") { weekdayLabels.getValue(it) }
     val modeLabel = when (commute.mode) {
         JourneyMode.TRANSIT -> stringResource(R.string.mvp_mode_transit)
         JourneyMode.BICYCLE -> stringResource(R.string.mvp_mode_bicycle)
@@ -197,7 +211,7 @@ private fun CommuteCard(
                 stringResource(
                     R.string.mvp_departure_description,
                     commute.formattedDeparture,
-                    commute.activeDays.joinToString("") { it.shortLabel }
+                    activeDaysLabel
                 )
             )
             Text(modeLabel, color = MaterialTheme.colorScheme.primary)

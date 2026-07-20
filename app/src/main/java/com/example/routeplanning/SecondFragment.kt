@@ -134,8 +134,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         try {
             val enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
             if(!enabled){
-                Toast.makeText(activity, "Activa la ubicación para un uso óptimo " +
-                        "de la aplicación", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_enable_location, Toast.LENGTH_SHORT).show()
                 val intent = Intent(ACTION_LOCATION_SOURCE_SETTINGS)
                 startActivity(intent) //if gps is off we request the user to activate it
             }
@@ -147,8 +146,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Log.i("Loc", "Location ok")
         } else {
-            Toast.makeText(activity, "Acepta los permisos de localización para " +
-                    "poder guardar tu ubicación actual", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, R.string.legacy_allow_location, Toast.LENGTH_LONG).show()
             ActivityCompat.requestPermissions(
                 requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 100)
@@ -183,8 +181,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         autocompleteFragment2!!.setPlaceFields(listOf(Place.Field.FORMATTED_ADDRESS,Place.Field.ID,
             Place.Field.DISPLAY_NAME, Place.Field.LOCATION))
 
-        autocompleteFragment!!.setHint("Buscar")
-        autocompleteFragment2!!.setHint("Buscar")
+        autocompleteFragment!!.setHint(getString(R.string.legacy_search))
+        autocompleteFragment2!!.setHint(getString(R.string.legacy_search))
 
         // Set up a PlaceSelectionListener to handle the response.
         autocompleteFragment!!.setOnPlaceSelectedListener(object : PlaceSelectionListener {
@@ -301,20 +299,22 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 position: Int,
                 id: Long
             ) {
-                if(parentView?.getItemAtPosition(position).toString() == "Coche"){
-                    checkb1 = true
-                    checkb2 = false
-                    checkb3 = false
-                }
-                if(parentView?.getItemAtPosition(position).toString() == "Caminar"){
-                    checkb1 = false
-                    checkb2 = true
-                    checkb3 = false
-                }
-                if(parentView?.getItemAtPosition(position).toString() == "Transporte público"){
-                    checkb1 = false
-                    checkb2 = false
-                    checkb3 = true
+                when (position) {
+                    0 -> {
+                        checkb1 = true
+                        checkb2 = false
+                        checkb3 = false
+                    }
+                    1 -> {
+                        checkb1 = false
+                        checkb2 = true
+                        checkb3 = false
+                    }
+                    2 -> {
+                        checkb1 = false
+                        checkb2 = false
+                        checkb3 = true
+                    }
                 }
             }
 
@@ -375,9 +375,9 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         //Delete button functionality
         delete.setOnClickListener{
             val builder = AlertDialog.Builder(requireContext())
-            builder.setMessage("¿Seguro que quieres borrar la ruta?")
+            builder.setMessage(R.string.legacy_delete_route_confirmation)
                 .setCancelable(false)
-                .setPositiveButton("Sí") { _, _ ->
+                .setPositiveButton(R.string.legacy_yes) { _, _ ->
                     // Delete selected route from database
                     if(address != "" && address2 != ""){
                         routesCollection
@@ -390,7 +390,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                 for (document in documents) {
                                     document.reference.delete()
                                         .addOnSuccessListener {
-                                            Toast.makeText(activity, "Ruta eliminada",
+                                            Toast.makeText(activity, R.string.legacy_route_deleted,
                                                 Toast.LENGTH_SHORT).show()
                                             // Update UI
                                             activity?.findViewById<NavigationView>(R.id.nav_view)?.
@@ -405,11 +405,11 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                             }
                     }
                     else{
-                        Toast.makeText(activity, "Error al eliminar, compruebe que ha " +
-                                "seleccionado una ruta válida", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, R.string.legacy_delete_route_error,
+                            Toast.LENGTH_SHORT).show()
                     }
                 }
-                .setNegativeButton("No") { dialog, _ ->
+                .setNegativeButton(R.string.legacy_no) { dialog, _ ->
                     // Dismiss the dialog
                     dialog.dismiss()
                 }
@@ -426,13 +426,13 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             val addresses = itemI.split(" - ")
 
             if(address == "" || address2 == ""){
-                Toast.makeText(activity, "No se han introducido direcciones de origen y/o " +
-                        "destino", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_missing_addresses,
+                    Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (submitted == 1) {
                 Toast.makeText(
-                    activity, "Ruta ya confirmada", Toast.LENGTH_SHORT
+                    activity, R.string.legacy_route_already_confirmed, Toast.LENGTH_SHORT
                 ).show()
                 return@setOnClickListener
             }
@@ -471,16 +471,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             if(itemI!=""){
                 if(address.contains(addresses[0]) || address2.contains(addresses[1])){
                     val builder = AlertDialog.Builder(requireContext())
-                    builder.setMessage("Ruta ya confirmada anteriormente. " +
-                            "¿Quizás querías editarla?")
+                    builder.setMessage(R.string.legacy_duplicate_route_confirmation)
                         .setCancelable(false)
-                        .setPositiveButton("Sí") { _, _ -> //EDIT ROUTE
+                        .setPositiveButton(R.string.legacy_yes) { _, _ -> //EDIT ROUTE
                             if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
                                 Log.i("Depart", "DEPART at: $org")
                             } else {
                                 Toast.makeText(
-                                    activity, "Error en la fecha, compruebe que la hora es " +
-                                            "correcta XX:XX", Toast.LENGTH_LONG
+                                    activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                                 ).show()
                                 return@setPositiveButton
                             }
@@ -489,8 +487,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                 Log.d("Debug1", "ARRIVE at: $dest")
                             } else {
                                 Toast.makeText(
-                                    activity, "Error en la fecha, compruebe que la hora es " +
-                                            "correcta XX:XX", Toast.LENGTH_LONG
+                                    activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                                 ).show()
                                 return@setPositiveButton
                             }
@@ -516,8 +513,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                             .addOnSuccessListener {
                                                 Log.d("FirestoreUPD", "Ruta actualizada")
                                                 //refresh menu
-                                                Toast.makeText(activity, "Cambios " +
-                                                        "realizados correctamente ",
+                                                Toast.makeText(activity, R.string.legacy_changes_saved,
                                                     Toast.LENGTH_SHORT).show()
                                                 activity?.findViewById<NavigationView>(R.id.
                                                 nav_view)?.menu?.removeGroup(1)
@@ -525,7 +521,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                                 populateMenu()
                                             }
                                             .addOnFailureListener { e ->
-                                                Toast.makeText(activity, "Error al modificar la ruta",
+                                                Toast.makeText(activity, R.string.legacy_update_route_error,
                                                     Toast.LENGTH_SHORT).show()
                                                 Log.e("Firestore", "Error actualizando ruta", e)
                                             }
@@ -537,13 +533,12 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
 
                         }
-                        .setNegativeButton("No, guardar igualmente"){_,_ ->
+                        .setNegativeButton(R.string.legacy_save_anyway){_,_ ->
                             if (values[0].toInt() <= 23 && values[1].toInt() <= 59) {
                                 Log.i("Depart", "DEPART at: $org")
                             } else {
                                 Toast.makeText(
-                                    activity, "Error en la fecha, compruebe que la hora es " +
-                                            "correcta XX:XX", Toast.LENGTH_LONG
+                                    activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                                 ).show()
                                 return@setNegativeButton
                             }
@@ -552,15 +547,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                 Log.d("Debug1", "ARRIVE at: $dest")
                             } else {
                                 Toast.makeText(
-                                    activity, "Error en la fecha, compruebe que la hora es " +
-                                            "correcta XX:XX", Toast.LENGTH_LONG
+                                    activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                                 ).show()
                                 return@setNegativeButton
                             }
 
                             //submit = 1 - guardar la ruta modificada como una nueva
                             if(address!="" && address2!=""){
-                                    Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT)
+                                    Toast.makeText(activity, R.string.legacy_sending, Toast.LENGTH_SHORT)
                                         .show()
                                 routesCollection.add(route)
                                     .addOnSuccessListener { documentReference->
@@ -575,19 +569,18 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                                 ", $org - $dest")
 
                                         Log.i("RealmOK", "Results $result")
-                                        Toast.makeText(activity, "Cambios " +
-                                                "realizados correctamente ",
+                                        Toast.makeText(activity, R.string.legacy_changes_saved,
                                             Toast.LENGTH_SHORT).show()
                                     }
                                     .addOnFailureListener{ e->
-                                        Toast.makeText(activity, "Error al guardar la ruta",
+                                        Toast.makeText(activity, R.string.legacy_save_route_error,
                                             Toast.LENGTH_SHORT).show()
                                         Log.e("FIRESTORE_ERROR", e.toString())
                                     }
 
                                 }else {
-                                    Toast.makeText(activity, "Aviso. No se han introducido " +
-                                            "datos sobre origen y/o destino", Toast.LENGTH_SHORT)
+                                    Toast.makeText(activity, R.string.legacy_missing_route_data,
+                                        Toast.LENGTH_SHORT)
                                         .show()
                                 }
 
@@ -606,8 +599,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         Log.i("Depart", "DEPART at: $org")
                     } else {
                         Toast.makeText(
-                            activity, "Error en la fecha, compruebe que la hora es correcta" +
-                                    " XX:XX", Toast.LENGTH_LONG
+                            activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                         ).show()
                         return@setOnClickListener
                     }
@@ -616,15 +608,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                         Log.d("Arrive", "ARRIVE at: $dest")
                     } else {
                         Toast.makeText(
-                            activity, "Error en la fecha, compruebe que la hora es correcta" +
-                                    " XX:XX", Toast.LENGTH_LONG
+                            activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                         ).show()
                         return@setOnClickListener
                     }
 
                     //submit = 1
                     if(address!="" && address2!=""){
-                            Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(activity, R.string.legacy_sending, Toast.LENGTH_SHORT).show()
                             val route = Routes(
                                 uid = androidId,
                                 origin = address,
@@ -647,18 +638,18 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                                         "${address.substringBefore
                                         (",")} - ${address2.substringBefore(",")},"
                                                 + " $org - $dest")
-                                    Toast.makeText(activity, "Ruta guardada correctamente",
+                                    Toast.makeText(activity, R.string.legacy_route_saved,
                                         Toast.LENGTH_SHORT).show()
                                 }
                                 .addOnFailureListener{ e->
-                                    Toast.makeText(activity, "Error al guardar la ruta",
+                                    Toast.makeText(activity, R.string.legacy_save_route_error,
                                         Toast.LENGTH_SHORT).show()
                                     Log.e("FIRESTORE_ERROR", e.toString())
                                 }
 
                         }else {
-                            Toast.makeText(activity, "Aviso. No se han introducido datos " +
-                                    "sobre origen y/o destino", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(activity, R.string.legacy_missing_route_data,
+                                Toast.LENGTH_SHORT).show()
                         }
 
                 }
@@ -669,8 +660,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     Log.i("Depart", "DEPART at: $org")
                 } else {
                     Toast.makeText(
-                        activity, "Error en la fecha, compruebe que la hora es correcta" +
-                                " XX:XX", Toast.LENGTH_LONG
+                        activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                     ).show()
                     return@setOnClickListener
                 }
@@ -679,15 +669,14 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     Log.d("Arrive", "ARRIVE at: $dest")
                 } else {
                     Toast.makeText(
-                        activity, "Error en la fecha, compruebe que la hora es correcta" +
-                                " XX:XX", Toast.LENGTH_LONG
+                        activity, R.string.legacy_invalid_time, Toast.LENGTH_LONG
                     ).show()
                     return@setOnClickListener
                 }
 
                 //submit = 1
                 if(address!="" && address2!=""){
-                        Toast.makeText(activity, "Enviando...", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, R.string.legacy_sending, Toast.LENGTH_SHORT).show()
                     val route = Routes(
                         uid = androidId,
                         origin = address,
@@ -709,19 +698,18 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                             add(1,routeCount-1, routeCount, "${address.substringBefore
                                 (",")} - ${address2.substringBefore(",")}, " +
                                     "$org - $dest")
-                            Toast.makeText(activity, "Ruta guardada correctamente",
+                            Toast.makeText(activity, R.string.legacy_route_saved,
                                 Toast.LENGTH_SHORT).show()
                         }
                         .addOnFailureListener{ e->
-                            Toast.makeText(activity, "Error al guardar la ruta",
+                            Toast.makeText(activity, R.string.legacy_save_route_error,
                                 Toast.LENGTH_SHORT).show()
                             Log.e("FIRESTORE_ERROR", e.toString())
                         }
 
                 }else {
                     Toast.makeText(
-                        activity, "Aviso. No se han introducido datos sobre " +
-                                "origen y/o destino", Toast.LENGTH_SHORT
+                        activity, R.string.legacy_missing_route_data, Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -748,7 +736,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 polyline=0
             }
             if(address != "" && address2 !=""){
-                Toast.makeText(activity, "Calculando ruta...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_calculating_route, Toast.LENGTH_SHORT).show()
                 result[0] = address
                 result[1] = address2
                 result[2] = timedep!!.text.toString()
@@ -812,8 +800,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                     // Get routes
                         val routes = jsonResponse.getJSONArray("routes")
                         if(routes.isNull(0)){
-                            Toast.makeText(context, "Error al calcular la ruta, por favor " +
-                                    "modifique los marcadores o el medio de transporte empleado",
+                            Toast.makeText(context, R.string.legacy_calculate_route_error,
                             Toast.LENGTH_LONG).show()
                             return@Listener
                         }
@@ -840,7 +827,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 requestQueue.add(directionsRequest)
             }
             else{
-                Toast.makeText(activity, "No se ha proporcionado una ruta válida",
+                Toast.makeText(activity, R.string.legacy_invalid_route,
                     Toast.LENGTH_SHORT).show()
             }
         }
@@ -877,7 +864,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         routesCollection.whereEqualTo("uid", androidId)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
-                    Toast.makeText(activity, "Error al cargar rutas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, R.string.legacy_load_routes_error,
+                        Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
@@ -906,7 +894,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
         Log.w("AUTH", "Legacy Firebase sync has been disabled")
         Toast.makeText(
             activity,
-            "Sincronización remota desactivada en esta versión",
+            R.string.legacy_remote_sync_disabled,
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -932,8 +920,7 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mMap.isMyLocationEnabled = true
         } else {
-            Toast.makeText(activity, "Acepta los permisos de localización para " +
-                    "poder guardar tu ubicación actual", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, R.string.legacy_allow_location, Toast.LENGTH_LONG).show()
             ActivityCompat.requestPermissions(
                 requireActivity(), arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 100)
@@ -981,8 +968,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
 
             } catch (ex: IOException) {
                 ex.printStackTrace()
-                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                    , Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_connection_problem,
+                    Toast.LENGTH_SHORT).show()
             }
         }
         else{
@@ -1087,8 +1074,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 }
             }
             catch (ex: Exception){
-                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                    , Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_connection_problem,
+                    Toast.LENGTH_SHORT).show()
                 Log.e("ERROR Locat", ex.toString())
                 clicked=0
             }
@@ -1162,8 +1149,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
             val list = geocoder.getFromLocation(lat, lng, 1) //Deprecated for Android 13
             return list!![0].getAddressLine(0)
         }catch(ex:Exception){
-            Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                , Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, R.string.legacy_connection_problem,
+                Toast.LENGTH_SHORT).show()
             Log.e("ERROR GEOCODER", ex.toString())
         }
         return ""
@@ -1191,8 +1178,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 marker = mMap.addMarker(MarkerOptions().position(p1)
                         .draggable(true))!!
             }catch(ex:Exception){
-                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                    , Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_connection_problem,
+                    Toast.LENGTH_SHORT).show()
                 Log.e("ERROR GEOCODER", ex.toString())
             }
         }
@@ -1212,8 +1199,8 @@ class SecondFragment: Fragment(), OnMapReadyCallback,
                 marker2 = mMap.addMarker(MarkerOptions().position(p1)
                     .draggable(true))!!
             }catch(ex:Exception){
-                Toast.makeText(activity, "Ha ocurrido un problema, comprueba la conexión"
-                    , Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.legacy_connection_problem,
+                    Toast.LENGTH_SHORT).show()
                 Log.e("ERROR GEOCODER", ex.toString())
             }
         }

@@ -90,7 +90,7 @@ class JourneySearchViewModelTest {
         viewModel.useCurrentLocation()
         mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals("Mi ubicación", viewModel.state.value.origin?.label)
+        assertEquals("My location", viewModel.state.value.origin?.label)
         assertEquals(coordinate, viewModel.state.value.origin?.coordinate)
         assertFalse(viewModel.state.value.isLocating)
         assertEquals(null, viewModel.state.value.errorMessage)
@@ -109,7 +109,10 @@ class JourneySearchViewModelTest {
         viewModel.useCurrentLocation()
         mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(message, viewModel.state.value.errorMessage)
+        assertEquals(
+            JourneySearchErrorMessage.CURRENT_LOCATION_UNAVAILABLE,
+            viewModel.state.value.errorMessage
+        )
         assertEquals(
             JourneySearchErrorKind.LOCATION_UNAVAILABLE,
             viewModel.state.value.errorKind
@@ -130,7 +133,10 @@ class JourneySearchViewModelTest {
             viewModel.state.value.errorKind
         )
         assertFalse(viewModel.state.value.errorRetryable)
-        assertTrue(viewModel.state.value.errorMessage.orEmpty().contains("manualmente"))
+        assertEquals(
+            JourneySearchErrorMessage.LOCATION_PERMISSION_DENIED,
+            viewModel.state.value.errorMessage
+        )
     }
 
     @Test
@@ -218,7 +224,7 @@ class JourneySearchViewModelTest {
         viewModel.search()
 
         assertEquals(
-            "Selecciona una dirección de origen y otra de destino.",
+            JourneySearchErrorMessage.MISSING_ADDRESSES,
             viewModel.state.value.errorMessage
         )
     }

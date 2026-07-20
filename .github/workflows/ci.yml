@@ -19,6 +19,8 @@ jobs:
           java-version: "21"
           cache: gradle
       - uses: android-actions/setup-android@v3
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
       - name: Validate Android
         run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
 

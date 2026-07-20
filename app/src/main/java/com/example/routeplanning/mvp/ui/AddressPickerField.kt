@@ -32,7 +32,7 @@ fun AddressPickerField(
     label: String,
     selectedPlace: AddressPlace?,
     onPlaceSelected: (AddressPlace) -> Unit,
-    onError: (String) -> Unit,
+    onError: (JourneySearchErrorMessage) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -47,13 +47,13 @@ fun AddressPickerField(
             Activity.RESULT_OK -> {
                 val prediction = PlaceAutocomplete.getPredictionFromIntent(intent)
                 if (prediction == null) {
-                    onError("Google Places no devolvió una dirección seleccionada.")
+                    onError(JourneySearchErrorMessage.ADDRESS_NO_SELECTION)
                     return@rememberLauncherForActivityResult
                 }
                 val sessionToken = PlaceAutocomplete.getSessionTokenFromIntent(intent)
                 val client = placesClient
                 if (client == null) {
-                    onError("Google Places no está configurado en esta instalación.")
+                    onError(JourneySearchErrorMessage.PLACES_NOT_CONFIGURED)
                     return@rememberLauncherForActivityResult
                 }
                 val request = FetchPlaceRequest.builder(prediction.placeId, PLACE_FIELDS)
@@ -67,7 +67,7 @@ fun AddressPickerField(
                         val placeId = place.id
                         val address = place.formattedAddress ?: place.displayName
                         if (location == null || placeId.isNullOrBlank() || address.isNullOrBlank()) {
-                            onError("No hemos podido obtener las coordenadas de esa dirección.")
+                            onError(JourneySearchErrorMessage.ADDRESS_COORDINATES_UNAVAILABLE)
                         } else {
                             onPlaceSelected(
                                 AddressPlace(
@@ -79,13 +79,12 @@ fun AddressPickerField(
                         }
                     }
                     .addOnFailureListener {
-                        onError("No hemos podido consultar los detalles de esa dirección.")
+                        onError(JourneySearchErrorMessage.ADDRESS_DETAILS_UNAVAILABLE)
                     }
             }
 
             PlaceAutocompleteActivity.RESULT_ERROR -> {
-                val status = PlaceAutocomplete.getResultStatusFromIntent(intent)
-                onError(status?.statusMessage ?: "Google Places no pudo completar la búsqueda.")
+                onError(JourneySearchErrorMessage.ADDRESS_SEARCH_FAILED)
             }
         }
     }
@@ -93,7 +92,7 @@ fun AddressPickerField(
     OutlinedButton(
         onClick = {
             if (placesClient == null) {
-                onError("Añade GOOGLE_MAPS_API en local.properties y sincroniza el proyecto.")
+                onError(JourneySearchErrorMessage.MAPS_API_MISSING)
                 return@OutlinedButton
             }
             val autocompleteIntent = PlaceAutocomplete.createIntent(context) {

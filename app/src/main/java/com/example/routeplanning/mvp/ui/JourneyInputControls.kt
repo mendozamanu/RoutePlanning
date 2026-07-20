@@ -20,7 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,7 +33,6 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.Locale
 
 @Composable
 fun CurrentLocationButton(
@@ -98,6 +99,10 @@ fun DeparturePicker(
     val context = LocalContext.current
     val selectedDate = departureDate.toLocalDateOrToday()
     val selectedTime = departureTime.toLocalTimeOrNow()
+    val locale = LocalConfiguration.current.locales[0]
+    val displayDateFormatter = remember(locale) {
+        DateTimeFormatter.ofPattern("EEE, d MMM yyyy", locale)
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -132,7 +137,7 @@ fun DeparturePicker(
             ) {
                 PickerButton(
                     label = stringResource(R.string.mvp_departure_date),
-                    value = selectedDate.format(DISPLAY_DATE_FORMATTER),
+                    value = selectedDate.format(displayDateFormatter),
                     onClick = {
                         DatePickerDialog(
                             context,
@@ -209,8 +214,4 @@ private fun String.toLocalTimeOrNow(): LocalTime = try {
     LocalTime.now()
 }
 
-private val DISPLAY_DATE_FORMATTER = DateTimeFormatter.ofPattern(
-    "EEE, d MMM yyyy",
-    Locale.forLanguageTag("es-ES")
-)
 private val DISPLAY_TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm")

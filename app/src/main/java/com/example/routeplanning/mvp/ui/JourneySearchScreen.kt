@@ -57,7 +57,7 @@ fun JourneySearchScreen(
     state: JourneySearchState,
     onOriginSelected: (com.example.routeplanning.mvp.domain.AddressPlace) -> Unit,
     onDestinationSelected: (com.example.routeplanning.mvp.domain.AddressPlace) -> Unit,
-    onAddressError: (String) -> Unit,
+    onAddressError: (JourneySearchErrorMessage) -> Unit,
     onUseCurrentLocation: () -> Unit,
     onLocationPermissionDenied: () -> Unit,
     onSwapLocations: () -> Unit,
@@ -191,7 +191,7 @@ fun JourneySearchScreen(
                 item {
                     JourneyProblemCard(
                         kind = state.errorKind,
-                        message = errorMessage,
+                        message = stringResource(errorMessage.stringResourceId()),
                         retryable = state.errorRetryable,
                         onRetry = when (state.errorKind) {
                             JourneySearchErrorKind.LOCATION_UNAVAILABLE -> onUseCurrentLocation
@@ -729,6 +729,32 @@ private fun formatDistance(distanceMeters: Int): String = if (distanceMeters < 1
 } else {
     val formatter = NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }
     "${formatter.format(distanceMeters / 1_000.0)} km"
+}
+
+private fun JourneySearchErrorMessage.stringResourceId(): Int = when (this) {
+    JourneySearchErrorMessage.ADDRESS_NO_SELECTION -> R.string.mvp_error_address_no_selection
+    JourneySearchErrorMessage.PLACES_NOT_CONFIGURED -> R.string.mvp_error_places_not_configured
+    JourneySearchErrorMessage.ADDRESS_COORDINATES_UNAVAILABLE -> R.string.mvp_error_address_coordinates
+    JourneySearchErrorMessage.ADDRESS_DETAILS_UNAVAILABLE -> R.string.mvp_error_address_details
+    JourneySearchErrorMessage.ADDRESS_SEARCH_FAILED -> R.string.mvp_error_address_search
+    JourneySearchErrorMessage.MAPS_API_MISSING -> R.string.mvp_error_maps_api_missing
+    JourneySearchErrorMessage.CURRENT_LOCATION_UNAVAILABLE ->
+        R.string.mvp_error_current_location_unavailable
+    JourneySearchErrorMessage.LOCATION_PERMISSION_DENIED ->
+        R.string.mvp_location_permission_denied
+    JourneySearchErrorMessage.SERVICE_UNAVAILABLE -> R.string.mvp_error_service_unavailable_body
+    JourneySearchErrorMessage.MISSING_ADDRESSES -> R.string.mvp_error_missing_addresses
+    JourneySearchErrorMessage.CURRENT_LOCATION_OUTSIDE_AREA ->
+        R.string.mvp_error_current_location_outside_area
+    JourneySearchErrorMessage.ORIGIN_OUTSIDE_AREA -> R.string.mvp_error_origin_outside_area
+    JourneySearchErrorMessage.DESTINATION_OUTSIDE_AREA ->
+        R.string.mvp_error_destination_outside_area
+    JourneySearchErrorMessage.ROUTE_OUTSIDE_AREA -> R.string.mvp_error_route_outside_area
+    JourneySearchErrorMessage.INVALID_DEPARTURE -> R.string.mvp_error_invalid_departure
+    JourneySearchErrorMessage.SAVED_COMMUTE_UNAVAILABLE ->
+        R.string.mvp_error_saved_commute_unavailable
+    JourneySearchErrorMessage.SAVED_COMMUTE_MISSING_COORDINATES ->
+        R.string.mvp_saved_commute_missing_coordinates
 }
 
 private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")

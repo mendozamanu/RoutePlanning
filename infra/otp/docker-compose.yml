@@ -1,0 +1,23 @@
+services:
+  otp-build:
+    profiles: ["build"]
+    image: docker.io/opentripplanner/opentripplanner:2.9.0@sha256:a7eac7da397faa9ec9dee407d4204895d24df4981500662fa6793aae0e71fd8f
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx4g
+    volumes:
+      - ./data:/var/opentripplanner
+      - ./config/otp-config.json:/var/opentripplanner/otp-config.json:ro
+      - ./config/build-config.json:/var/opentripplanner/build-config.json:ro
+    command: ["--build", "--save"]
+
+  otp:
+    image: docker.io/opentripplanner/opentripplanner:2.9.0@sha256:a7eac7da397faa9ec9dee407d4204895d24df4981500662fa6793aae0e71fd8f
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx4g
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/var/opentripplanner
+      - ./config/otp-config.json:/var/opentripplanner/otp-config.json:ro
+    command: ["--load", "--serve"]
+    restart: unless-stopped

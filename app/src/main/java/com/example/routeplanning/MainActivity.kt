@@ -25,6 +25,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.example.routeplanning.databinding.ActivityMainBinding
 import com.google.android.material.chip.Chip
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.Firebase
+import com.google.firebase.initialize
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -49,6 +51,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawerLayout = binding.drawerLayout
         navView = binding.navView
 
+        Firebase.initialize(this)
+
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
         val appBarConfiguration = AppBarConfiguration(navController.graph, drawerLayout)
@@ -72,7 +76,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == R.id.refresh){
-            (myFragment as SecondFragment).loginToMongo()
+            (myFragment as SecondFragment).authenticateWithFirebase()
             Toast.makeText(this, "Reconectando...", Toast.LENGTH_SHORT).show()
         }
         if(item.itemId == R.id.add){ //Clears the form
@@ -157,18 +161,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun checkPermissions(): Boolean {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            return true
-        }
-        return false
+        return ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestPermissions() {

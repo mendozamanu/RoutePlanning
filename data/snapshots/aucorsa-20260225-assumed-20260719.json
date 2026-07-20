@@ -1,0 +1,30 @@
+{
+  "snapshot_id": "aucorsa-20260225-assumed-20260719-127d6e828b76",
+  "status": "assumed_current",
+  "source_snapshot_id": "aucorsa-20260225-4fa3e7652467",
+  "source_sha256": "4fa3e7652467903a31a16c00f730c590cc4204c017ea26f7b2d823d85a6e97e1",
+  "derived_sha256": "127d6e828b76bfd33e6c18a1d76d672424a7d2a2bb7bb299bcc3351df4d12174",
+  "derived_size_bytes": 2392348,
+  "created_on": "2026-07-19",
+  "official_service_end_date": "2026-03-31",
+  "projection_start_date": "2026-04-01",
+  "projection_end_date": "2027-07-19",
+  "assumption": "The route network and ordinary scheduled service remain unchanged until a newer official GTFS is uploaded.",
+  "weekly_template": {
+    "weekday_reference_date": "2026-03-09",
+    "saturday_reference_date": "2026-03-14",
+    "sunday_reference_date": "2026-03-15",
+    "weekday_service_count": 21,
+    "saturday_service_count": 1,
+    "sunday_service_count": 1,
+    "projected_service_count": 23
+  },
+  "quality": {
+    "validation_errors": [],
+    "service_end_date": "2027-07-19",
+    "referential_integrity": "valid",
+    "accessibility_metadata": "unknown",
+    "realtime": false
+  },
+  "disclosure": "Derived scheduled data; validity after 2026-03-31 has not been confirmed by AUCORSA."
+}

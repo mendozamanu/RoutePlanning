@@ -1,0 +1,99 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "bc6d585bcd918dea5c59fe27361e33bd",
+    "entities": [
+      {
+        "tableName": "saved_commutes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `origin_label` TEXT NOT NULL, `destination_label` TEXT NOT NULL, `origin_latitude` REAL, `origin_longitude` REAL, `destination_latitude` REAL, `destination_longitude` REAL, `departure_hour` INTEGER NOT NULL, `departure_minute` INTEGER NOT NULL, `active_days` TEXT NOT NULL, `mode` TEXT NOT NULL, `profile` TEXT NOT NULL, `created_at_epoch_millis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originLabel",
+            "columnName": "origin_label",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinationLabel",
+            "columnName": "destination_label",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originLatitude",
+            "columnName": "origin_latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "originLongitude",
+            "columnName": "origin_longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "destinationLatitude",
+            "columnName": "destination_latitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "destinationLongitude",
+            "columnName": "destination_longitude",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "departureHour",
+            "columnName": "departure_hour",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "departureMinute",
+            "columnName": "departure_minute",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activeDays",
+            "columnName": "active_days",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profile",
+            "columnName": "profile",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMillis",
+            "columnName": "created_at_epoch_millis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bc6d585bcd918dea5c59fe27361e33bd')"
+    ]
+  }
+}

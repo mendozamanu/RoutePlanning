@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "354561524500",
+    "project_id": "routeplanning-349908",
+    "storage_bucket": "routeplanning-349908.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354561524500:android:8bd3d50d1ad1e520b43801",
+        "android_client_info": {
+          "package_name": "com.example.routeplanning"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZQI1d-Q1ON_M6-E8MTvaGY0bQorWDRAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

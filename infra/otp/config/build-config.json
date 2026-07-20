@@ -1,0 +1,14 @@
+{
+  "transitFeeds": [
+    {
+      "type": "gtfs",
+      "feedId": "AUCORSA",
+      "source": "aucorsa.gtfs.zip"
+    },
+    {
+      "type": "gtfs",
+      "feedId": "RENFE",
+      "source": "renfe-md.gtfs.zip"
+    }
+  ]
+}

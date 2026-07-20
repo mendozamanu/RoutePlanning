@@ -1,0 +1,28 @@
+{
+  "snapshot_id": "aucorsa-20260225-4fa3e7652467",
+  "source": "https://nap.transportes.gob.es/Files/Detail/1375",
+  "downloaded_filename": "20260225_110006_BUS_CORDOBA.zip",
+  "sha256": "4fa3e7652467903a31a16c00f730c590cc4204c017ea26f7b2d823d85a6e97e1",
+  "size_bytes": 2392243,
+  "inspected_on": "2026-07-18",
+  "status": "development_expired",
+  "service_end_date": "2026-03-31",
+  "counts": {
+    "stops": 721,
+    "routes": 37,
+    "trips": 8780,
+    "stop_times": 202640
+  },
+  "bounding_box": {
+    "minimum_latitude": 37.8321641308938,
+    "minimum_longitude": -4.93708848971267,
+    "maximum_latitude": 38.0169323991046,
+    "maximum_longitude": -4.65447049593993
+  },
+  "quality": {
+    "referential_integrity": "valid",
+    "stop_wheelchair_coverage_percent": 0.0,
+    "trip_wheelchair_coverage_percent": 0.0,
+    "activation_blockers": ["SERVICE_EXPIRED"]
+  }
+}

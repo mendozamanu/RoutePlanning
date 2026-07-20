@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "route-planning-api"
+version = "0.1.0"
+description = "API facade for the Cordoba urban commuting MVP"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "httpx>=0.28,<1",
+    "pydantic>=2.10,<3",
+    "uvicorn[standard]>=0.34,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9",
+    "ruff>=0.11,<1",
+]
+
+[project.scripts]
+gtfs-inspect = "route_planning_api.gtfs.cli:main"
+gtfs-project = "route_planning_api.gtfs.project_cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/route_planning_api"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

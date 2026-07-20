@@ -1,0 +1,19 @@
+{
+  "snapshot_id": "osm-cordoba-20260717-f1a4dada9fce",
+  "source": "https://download.geofabrik.de/europe/spain/andalucia.html",
+  "source_filename": "andalucia-260717.osm.pbf",
+  "source_sha256": "b261b0ad3adc5bbbf7d5d5e6bd5531516d1b7587e1c10828bc8c68489fe6788d",
+  "source_size_bytes": 190994648,
+  "output_filename": "cordoba.osm.pbf",
+  "output_sha256": "f1a4dada9fcec239e8bd10517fe2b02ace48c3c4ce7d32f926276d90cd4df2da",
+  "output_size_bytes": 3944081,
+  "inspected_on": "2026-07-19",
+  "extract": {
+    "bounding_box": [-5.04, 37.75, -4.55, 38.10],
+    "strategy": "complete_ways",
+    "osmium_version": "1.15.0",
+    "nodes": 413364,
+    "ways": 54564,
+    "relations": 2764
+  }
+}
